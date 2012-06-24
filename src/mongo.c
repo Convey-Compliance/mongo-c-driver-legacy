@@ -57,9 +57,10 @@ const char* _get_host_port(mongo_host_port* hp) {
 
 MONGO_EXPORT const char* mongo_get_primary(mongo* conn) {
     mongo* conn_ = (mongo*)conn;
-    if( !(conn_->connected) || (conn_->primary->host == '\0') )
-        return NULL;
-    return _get_host_port(conn_->primary);
+    /* JSB */
+    if (conn_->primary->host[0])
+      return _get_host_port(conn_->primary); 
+    else return NULL;
 }
 
 
@@ -124,7 +125,7 @@ MONGO_EXPORT void __mongo_set_error( mongo *conn, mongo_error_t err, const char 
         str_size = strlen( str ) + 1;
         errstr_size = str_size > MONGO_ERR_LEN ? MONGO_ERR_LEN : str_size;
         memcpy( conn->errstr, str, errstr_size );
-        conn->errstr[errstr_size-1] = '\0';
+        conn->errstr[errstr_size] = '\0';
     }
 }
 
@@ -405,7 +406,7 @@ MONGO_EXPORT void mongo_init( mongo *conn ) {
 MONGO_EXPORT int mongo_connect( mongo *conn , const char *host, int port ) {
     mongo_init( conn );
 
-    conn->primary = bson_malloc( sizeof( mongo_host_port ) );
+    conn->primary = (mongo_host_port*) bson_malloc( sizeof( mongo_host_port ) );
     strncpy( conn->primary->host, host, strlen( host ) + 1 );
     conn->primary->port = port;
     conn->primary->next = NULL;
@@ -422,20 +423,20 @@ MONGO_EXPORT int mongo_connect( mongo *conn , const char *host, int port ) {
 MONGO_EXPORT void mongo_replset_init( mongo *conn, const char *name ) {
     mongo_init( conn );
 
-    conn->replset = bson_malloc( sizeof( mongo_replset ) );
+    conn->replset = (mongo_replset*) bson_malloc( sizeof( mongo_replset ) );
     conn->replset->primary_connected = 0;
     conn->replset->seeds = NULL;
     conn->replset->hosts = NULL;
     conn->replset->name = ( char * )bson_malloc( strlen( name ) + 1 );
     memcpy( conn->replset->name, name, strlen( name ) + 1  );
 
-    conn->primary = bson_malloc( sizeof( mongo_host_port ) );
+    conn->primary = (mongo_host_port*) bson_malloc( sizeof( mongo_host_port ) );
     conn->primary->host[0] = '\0';
     conn->primary->next = NULL;
 }
 
 static void mongo_replset_add_node( mongo_host_port **list, const char *host, int port ) {
-    mongo_host_port *host_port = bson_malloc( sizeof( mongo_host_port ) );
+    mongo_host_port *host_port = (mongo_host_port*) bson_malloc( sizeof( mongo_host_port ) );
     host_port->port = port;
     host_port->next = NULL;
     strncpy( host_port->host, host, strlen( host ) + 1 );
