@@ -21,3 +21,4 @@ docs/source/sphinx/build
 docs/source/doxygen
 /BuildFiles/
 /Run/
+/error.log
