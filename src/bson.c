@@ -189,7 +189,7 @@ MONGO_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
     static int incr = 0;
     static int fuzz = 0;
     int i;
-    int t = time( NULL );
+    int t = (int)time( NULL );
 
     if( oid_inc_func )
         i = oid_inc_func();
@@ -453,9 +453,9 @@ MONGO_EXPORT int bson_iterator_int( const bson_iterator *i ) {
     case BSON_INT:
         return bson_iterator_int_raw( i );
     case BSON_LONG:
-        return bson_iterator_long_raw( i );
+        return (int)bson_iterator_long_raw( i );
     case BSON_DOUBLE:
-        return bson_iterator_double_raw( i );
+        return (int)bson_iterator_double_raw( i );
     default:
         return 0;
     }
@@ -466,7 +466,7 @@ MONGO_EXPORT double bson_iterator_double( const bson_iterator *i ) {
     case BSON_INT:
         return bson_iterator_int_raw( i );
     case BSON_LONG:
-        return bson_iterator_long_raw( i );
+        return (double)bson_iterator_long_raw( i );
     case BSON_DOUBLE:
         return bson_iterator_double_raw( i );
     default:
@@ -481,7 +481,7 @@ MONGO_EXPORT int64_t bson_iterator_long( const bson_iterator *i ) {
     case BSON_LONG:
         return bson_iterator_long_raw( i );
     case BSON_DOUBLE:
-        return bson_iterator_double_raw( i );
+        return (int64_t) bson_iterator_double_raw( i );
     default:
         return 0;
     }
@@ -659,7 +659,7 @@ int bson_ensure_space( bson *b, const int bytesNeeded ) {
     if ( pos + bytesNeeded <= b->dataSize )
         return BSON_OK;
 
-    new_size = 1.5 * ( b->dataSize + bytesNeeded );
+    new_size = (int)(1.5 * ( b->dataSize + bytesNeeded ));
 
     if( new_size < b->dataSize ) {
         if( ( b->dataSize + bytesNeeded ) < INT_MAX )
@@ -670,7 +670,7 @@ int bson_ensure_space( bson *b, const int bytesNeeded ) {
         }
     }
 
-    b->data = bson_realloc( b->data, new_size );
+    b->data = (char*) bson_realloc( b->data, new_size );
     if ( !b->data )
         bson_fatal_msg( !!b->data, "realloc() failed" );
 
