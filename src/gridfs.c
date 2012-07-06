@@ -571,6 +571,7 @@ MONGO_EXPORT int gridfile_get_chunksize(gridfile *gfile) {
 }
 
 MONGO_EXPORT gridfs_offset gridfile_get_contentlength(gridfile *gfile) {
+  gridfile_flush_pendingchunk(gfile);    
   return gfile->length;  
 }
 
