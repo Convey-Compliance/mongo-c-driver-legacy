@@ -53,16 +53,22 @@ static int ( *oid_inc_func )( void )  = NULL;
    ------------------------------ */
 
 MONGO_EXPORT bson* bson_create() {
-	return (bson*)bson_malloc(sizeof(bson));
+  bson *b = (bson*)bson_malloc(sizeof(bson));
+  b->data = NULL;
+	return b;
 }
 
 MONGO_EXPORT void bson_dispose(bson* b) {
 	bson_free(b);
 }
 
+/* emptyData made global, bson_destroy now is smart not to attempt freeing
+   the data field if it's equals to emptyData */ 
+
+static char *emptyData = "\005\0\0\0\0";
+
 MONGO_EXPORT bson *bson_empty( bson *obj ) {
-    static char *data = "\005\0\0\0\0";
-    bson_init_data( obj, data );
+    bson_init_data( obj, emptyData );
     obj->finished = 1;
     obj->err = 0;
     obj->errstr = NULL;
@@ -666,7 +672,9 @@ MONGO_EXPORT int bson_finish( bson *b ) {
 
 MONGO_EXPORT void bson_destroy( bson *b ) {
     if (b) {
-        bson_free( b->data );
+      if(  b->data && b->data != emptyData) {
+          bson_free( b->data );
+        }
         b->err = 0;
         b->data = 0;
         b->cur = 0;
