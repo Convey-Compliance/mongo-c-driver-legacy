@@ -38,7 +38,7 @@ int mongo_env_close_socket( int socket ) {
 }
 
 int mongo_env_write_socket( mongo *conn, const void *buf, int len ) {
-    const char *cbuf = buf;
+    const char *cbuf = (const char*) buf;
     int flags = 0;
 
     while ( len ) {
