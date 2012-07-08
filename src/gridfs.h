@@ -35,6 +35,7 @@ typedef struct {
     const char *prefix; /**> The prefix of the GridFS's collections, default is NULL */
     const char *files_ns; /**> The namespace where the file's metadata is stored */
     const char *chunks_ns; /**. The namespace where the files's data is stored in chunks */
+    bson_bool_t caseInsensitive; /**. If true then files are matched in case insensitive fashion */
 } gridfs;
 
 /* A GridFile is a single GridFS file. */
@@ -237,6 +238,15 @@ MONGO_EXPORT bson_date_t gridfile_get_uploaddate( gridfile *gfile );
 MONGO_EXPORT const char *gridfile_get_md5( gridfile *gfile );
 
 /**
+ *  Returns the _id in GridFile specified by name
+ *
+ *  @param gfile - the working GridFile
+ * 
+ *  @return - the _id field in metadata
+ */
+MONGO_EXPORT bson_oid_t *gridfile_get_id(gridfile *gfile);
+
+/**
  *  Returns the field in GridFile specified by name
  *
  *  @param gfile - the working GridFile
@@ -328,5 +338,12 @@ MONGO_EXPORT gridfs_offset gridfile_read( gridfile *gfile, gridfs_offset size, c
  *  @return - resulting offset location
  */
 MONGO_EXPORT gridfs_offset gridfile_seek( gridfile *gfile, gridfs_offset offset );
+
+/**
+ *  @param gfile - the working GridFile
+ *  @param newSize - the new size after truncation
+ *
+ */
+MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newSize);
 
 #endif

@@ -30,7 +30,9 @@ MONGO_EXPORT void gridfs_dispose(gridfs *gfs) {
 }
 
 MONGO_EXPORT gridfile *gridfile_create() {
-  return (gridfile*)bson_malloc(sizeof(gridfile));
+  gridfile* gfile = (gridfile*)bson_malloc(sizeof(gridfile));  
+  memset( gfile, 0, sizeof ( gridfile ) );
+  return gfile;
 }
 
 MONGO_EXPORT void gridfile_dispose(gridfile *gf) {
@@ -40,7 +42,6 @@ MONGO_EXPORT void gridfile_dispose(gridfile *gf) {
 MONGO_EXPORT void gridfile_get_descriptor(gridfile *gf, bson *out) {
   *out =  *gf->meta;
 }
-
 
 static bson *chunk_new(bson_oid_t id, int chunkNumber, const char *data, int len) {
   bson *b = (bson*)bson_malloc(sizeof(bson));
@@ -64,6 +65,7 @@ int gridfs_init(mongo *client, const char *dbname, const char *prefix, gridfs *g
   bson b;
   bson_bool_t success;
 
+  gfs->caseInsensitive = 0;
   gfs->client = client;
 
   /* Allocate space to own the dbname */
@@ -136,6 +138,13 @@ MONGO_EXPORT void gridfs_destroy(gridfs *gfs) {
   } 
 }
 
+char* upperFileName(const char* filename){
+  char* upperName = (char*) bson_malloc( strlen( filename ) + 1 );
+  strcpy(upperName, filename);
+  _strupr(upperName);
+  return upperName;
+}
+
 static int gridfs_insert_file(gridfs *gfs, const char *name, const bson_oid_t id, gridfs_offset length, const char *contenttype) {
   bson command;
   bson ret;
@@ -144,6 +153,7 @@ static int gridfs_insert_file(gridfs *gfs, const char *name, const bson_oid_t id
   bson q;
   int result;
   int64_t d;
+  char *upperName = NULL;
 
   /* If you don't care about calculating MD5 hash for a particular file, simply include the string "no_md5" on your contentype param */
   if( !strstr( contenttype, "no_md5" ) ) {  
@@ -164,8 +174,11 @@ static int gridfs_insert_file(gridfs *gfs, const char *name, const bson_oid_t id
   /* Create and insert BSON for file metadata */
   bson_init(&ret);
   bson_append_oid(&ret, "_id", &id);
+  if( gfs->caseInsensitive ) {
+    upperName = upperFileName(name);    
+  }
   if (name != NULL &&  *name != '\0') {
-    bson_append_string(&ret, "filename", name);
+    bson_append_string(&ret, "filename", upperName ? upperName : name);
   }
   bson_append_long(&ret, "length", length);
   bson_append_int(&ret, "chunkSize", DEFAULT_CHUNK_SIZE);
@@ -181,6 +194,9 @@ static int gridfs_insert_file(gridfs *gfs, const char *name, const bson_oid_t id
   if (contenttype != NULL &&  *contenttype != '\0') {
     bson_append_string(&ret, "contentType", contenttype);
   }
+  if ( upperName ) {
+    bson_append_string(&ret, "realFilename", name);
+  }
   bson_finish(&ret);
 
   bson_init(&q);
@@ -191,6 +207,9 @@ static int gridfs_insert_file(gridfs *gfs, const char *name, const bson_oid_t id
 
   bson_destroy(&ret);
   bson_destroy(&q);
+  if( upperName ) {
+    bson_free( upperName );
+  }
 
   return result;
 }
@@ -221,38 +240,49 @@ MONGO_EXPORT int gridfs_store_buffer(gridfs *gfs, const char *data, gridfs_offse
   return gridfs_insert_file(gfs, remotename, id, length, contenttype);
 }
 
-bson_oid_t *gridfile_get_id(gridfile *gfile) {
+MONGO_EXPORT bson_oid_t *gridfile_get_id(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "_id");
-  if (bson_iterator_type(&it) == BSON_OID) {
-    return bson_iterator_oid(&it);
+  if( bson_find(&it, gfile->meta, "_id") != BSON_EOO) {
+    if (bson_iterator_type(&it) == BSON_OID) {
+      return bson_iterator_oid(&it);
+    } else {
+      return NULL;
+    } 
   } else {
-    return NULL;
-  } 
+    return &gfile->id;
+  }
 }
 
 void gridfile_init_length(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "length");
-  if (bson_iterator_type(&it) == BSON_INT) {
-    gfile->length = (gridfs_offset)bson_iterator_int(&it);
+  if( bson_find(&it, gfile->meta, "length") != BSON_EOO ) {
+    if (bson_iterator_type(&it) == BSON_INT) {
+      gfile->length = (gridfs_offset)bson_iterator_int(&it);
+    } else {
+      gfile->length = (gridfs_offset)bson_iterator_long(&it);
+    }
   } else {
-    gfile->length = (gridfs_offset)bson_iterator_long(&it);
+    gfile->length = 0;
   }
 }
 
 MONGO_EXPORT void gridfile_writer_init(gridfile *gfile, gridfs *gfs, const char *remote_name, const char *content_type) {
   bson_oid_t *foid;
+  gridfile tmpFile;
 
   gfile->gfs = gfs;
-  if (gridfs_find_filename(gfs, remote_name, gfile) == MONGO_OK && gridfile_exists(gfile)) {
-    /* If file exists, then let's initialize members dedicated to coordinate writing operations 
+  if (gridfs_find_filename(gfs, remote_name, &tmpFile) == MONGO_OK) {
+    if( gridfile_exists(&tmpFile) ) {
+      /* If file exists, then let's initialize members dedicated to coordinate writing operations 
        with existing file metadata */
-    foid = gridfile_get_id(gfile);
-    memcpy(&gfile->id, foid, sizeof(gfile->id));    
-    gridfile_init_length( gfile );    
+      foid = gridfile_get_id( &tmpFile );
+      memcpy(&gfile->id, foid, sizeof( gfile->id ));    
+      gridfile_init_length( &tmpFile );
+      gfile->length = tmpFile.length;      
+    }
+    gridfile_destroy( &tmpFile );
   } else {
     /* File doesn't exist, let's create a new bson id and initialize length to zero */
     bson_oid_gen(&(gfile->id));
@@ -304,11 +334,14 @@ int gridfile_load_pending_data_with_pos_chunk(gridfile *gfile) {
   int chunk_len;
   const char *chunk_data;
   bson_iterator it;
-  bson chk;
+  bson chk = {NULL, NULL};
 
   chk.dataSize = 0;
   gridfile_get_chunk(gfile, (int)(gfile->pos / DEFAULT_CHUNK_SIZE), &chk);
   if (chk.dataSize <= 5) {
+    if( chk.data ) {
+      bson_destroy( &chk );
+    }
     return MONGO_ERROR; /* The chunk didn't contain any fields... this has to be an internal error... */
   }
   bson_find(&it, &chk, "data");
@@ -319,6 +352,7 @@ int gridfile_load_pending_data_with_pos_chunk(gridfile *gfile) {
   if( chunk_len ) {
     memcpy(gfile->pending_data, chunk_data, chunk_len);
   }
+  bson_destroy( &chk );
   return MONGO_OK;
 }
 
@@ -388,9 +422,11 @@ MONGO_EXPORT int gridfile_writer_done(gridfile *gfile) {
   if (gfile->pending_len) {
     /* write any remaining pending chunk data.
      * pending data will always take up less than one chunk */
-    gridfile_flush_pendingchunk(gfile);
+    gridfile_flush_pendingchunk(gfile);    
+  }
+  if( gfile->pending_data ) {
     bson_free(gfile->pending_data);    
-    gfile->pending_data = NULL;    
+    gfile->pending_data = NULL;   
   }
 
   /* insert into files collection */
@@ -457,12 +493,23 @@ MONGO_EXPORT void gridfs_remove_filename(gridfs *gfs, const char *filename) {
   bson_iterator it;
   bson_oid_t id;
   bson b;
+  char *upperName = NULL;
 
+  if( gfs->caseInsensitive ) {
+    upperName = upperFileName(filename);
+  }
   bson_init(&query);
-  bson_append_string(&query, "filename", filename);
+  if( upperName ) {
+    bson_append_string(&query, "filename", upperName);
+  } else {
+    bson_append_string(&query, "filename", filename);
+  }
   bson_finish(&query);
   files = mongo_find(gfs->client, gfs->files_ns, &query, NULL, 0, 0, 0);
   bson_destroy(&query);
+  if( upperName ) {
+    bson_free( upperName );
+  }
 
   /* Remove each file and it's chunks from files named filename */
   while (mongo_cursor_next(files) == MONGO_OK) {
@@ -521,12 +568,23 @@ int gridfs_find_filename(gridfs *gfs, const char *filename, gridfile *gfile)
  {
   bson query;
   int i;
+  char *upperName = NULL;
 
   bson_init(&query);
-  bson_append_string(&query, "filename", filename);
+  if( gfs->caseInsensitive ) {
+    upperName = upperFileName( filename );
+  }
+  if( upperName ) {
+    bson_append_string(&query, "filename", upperName);
+  } else {
+    bson_append_string(&query, "filename", filename);
+  }
   bson_finish(&query);
   i = gridfs_find_query(gfs, &query, gfile);
   bson_destroy(&query);
+  if( upperName ) {
+    bson_free( upperName );
+  }
   return i;
 }
 
@@ -559,15 +617,24 @@ bson_bool_t gridfile_exists(gridfile *gfile) {
 MONGO_EXPORT const char *gridfile_get_filename(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "filename");
-  return bson_iterator_string(&it);
+  if( gfile->gfs->caseInsensitive && bson_find( &it, gfile->meta, "realFilename" ) != BSON_EOO ) {
+    return bson_iterator_string(&it); 
+  }
+  if( bson_find(&it, gfile->meta, "filename") != BSON_EOO) {
+    return bson_iterator_string(&it);
+  } else {
+    return gfile->remote_name;
+  }
 }
 
 MONGO_EXPORT int gridfile_get_chunksize(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "chunkSize");
-  return bson_iterator_int(&it);
+  if( bson_find(&it, gfile->meta, "chunkSize") != BSON_EOO ) {
+    return bson_iterator_int(&it);
+  } else {  
+    return DEFAULT_CHUNK_SIZE;
+  }
 }
 
 MONGO_EXPORT gridfs_offset gridfile_get_contentlength(gridfile *gfile) {
@@ -588,29 +655,41 @@ MONGO_EXPORT const char *gridfile_get_contenttype(gridfile *gfile) {
 MONGO_EXPORT bson_date_t gridfile_get_uploaddate(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "uploadDate");
-  return bson_iterator_date(&it);
+  if( bson_find(&it, gfile->meta, "uploadDate") != BSON_EOO) {
+    return bson_iterator_date(&it);
+  } else {
+    return 0;
+  }
 }
 
 MONGO_EXPORT const char *gridfile_get_md5(gridfile *gfile) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, "md5");
-  return bson_iterator_string(&it);
+  if( bson_find(&it, gfile->meta, "md5") != BSON_EOO ) {
+    return bson_iterator_string(&it);
+  } else {
+    return NULL;
+  }
 }
 
 const char *gridfile_get_field(gridfile *gfile, const char *name) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, name);
-  return bson_iterator_value(&it);
+  if( bson_find(&it, gfile->meta, name) != BSON_EOO) {
+    return bson_iterator_value(&it);
+  } else {
+    return NULL;
+  }
 }
 
 bson_bool_t gridfile_get_boolean(gridfile *gfile, const char *name) {
   bson_iterator it;
 
-  bson_find(&it, gfile->meta, name);
-  return bson_iterator_bool(&it);
+  if( bson_find(&it, gfile->meta, name) != BSON_EOO) {
+    return bson_iterator_bool(&it);
+  } else {
+    return 0;
+  }
 }
 
 MONGO_EXPORT void gridfile_get_metadata(gridfile *gfile, bson *out) {
@@ -675,8 +754,11 @@ MONGO_EXPORT mongo_cursor *gridfile_get_chunks(gridfile *gfile, int start, int s
   bson command;
   mongo_cursor *cursor;
 
-  bson_find(&it, gfile->meta, "_id");
-  id =  *bson_iterator_oid(&it);
+  if( bson_find(&it, gfile->meta, "_id") != BSON_EOO) {
+    id =  *bson_iterator_oid(&it);
+  } else {
+    id = gfile->id;
+  }
 
   bson_init(&query);
   bson_append_oid(&query, "files_id", &id);
@@ -743,6 +825,7 @@ MONGO_EXPORT gridfs_offset gridfile_read(gridfile *gfile, gridfs_offset size, ch
   bson_iterator it;
   gridfs_offset chunk_len;
   const char *chunk_data;
+  gridfs_offset realSize = 0;
 
   gridfile_flush_pendingchunk(gfile);  
 
@@ -757,7 +840,9 @@ MONGO_EXPORT gridfs_offset gridfile_read(gridfile *gfile, gridfs_offset size, ch
   chunks = gridfile_get_chunks(gfile, first_chunk, total_chunks);
 
   for (i = 0; i < total_chunks; i++) {
-    mongo_cursor_next(chunks);
+    if( mongo_cursor_next(chunks) == MONGO_ERROR ){
+      break;
+    }
     chunk = chunks->current;
     bson_find(&it, &chunk, "data");
     chunk_len = bson_iterator_bin_len(&it);
@@ -770,15 +855,17 @@ MONGO_EXPORT gridfs_offset gridfile_read(gridfile *gfile, gridfs_offset size, ch
       memcpy(buf, chunk_data, (size_t)chunk_len);
       bytes_left -= chunk_len;
       buf += chunk_len;
+      realSize += chunk_len;
     } else {
       memcpy(buf, chunk_data, (size_t)bytes_left);
-    }
+      realSize += (size_t)bytes_left;
+    }    
   }
 
   mongo_cursor_destroy(chunks);
-  gfile->pos = gfile->pos + size;
+  gfile->pos = gfile->pos + realSize;
 
-  return size;
+  return realSize;
 }
 
 MONGO_EXPORT gridfs_offset gridfile_seek(gridfile *gfile, gridfs_offset offset) {
@@ -790,4 +877,48 @@ MONGO_EXPORT gridfs_offset gridfile_seek(gridfile *gfile, gridfs_offset offset) 
   length = gridfile_get_contentlength(gfile);
   gfile->pos = length < offset ? length : offset;
   return gfile->pos;
+}
+
+void gridfile_remove_chunks( gridfile *gfile, int deleteFromChunk){
+  bson q;
+
+  bson_init( &q );
+  bson_append_oid(&q, "files_id", gridfile_get_id( gfile ));
+  if( deleteFromChunk >= 0 ) {
+    bson_append_start_object( &q, "n" );
+      bson_append_int( &q, "$gte", deleteFromChunk );
+    bson_append_finish_object( &q );
+  }
+  bson_finish( &q );
+  mongo_remove( gfile->gfs->client, gfile->gfs->chunks_ns, &q, NULL);
+  bson_destroy( &q );
+}
+
+MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newSize) {
+  int deleteFromChunk;
+
+  if( newSize < 0 ) {
+    newSize = 0;
+  } else if ( newSize > gridfile_get_contentlength( gfile ) ) {
+    return gridfile_seek( gfile, gridfile_get_contentlength( gfile ) );    
+  }
+  if( newSize > 0 ) {
+    deleteFromChunk = (int)(newSize / gridfile_get_chunksize( gfile )); 
+    gridfile_seek(gfile, newSize);    
+    if( gfile->pos % gridfile_get_chunksize( gfile ) ) {
+      gridfile_load_pending_data_with_pos_chunk( gfile );      
+      gfile->pending_len = gfile->pos % gridfile_get_chunksize( gfile ); /* This will truncate the preloaded chunk */
+      gridfile_flush_pendingchunk( gfile );
+      deleteFromChunk++;
+    }
+    /* Now let's remove the trailing chunks resulting from truncation */
+    gridfile_remove_chunks( gfile, deleteFromChunk );
+    gfile->length = newSize;
+  } else {
+    /* Expected file size is zero. We will remove ALL chunks */
+    gridfile_remove_chunks( gfile, -1 );    
+    gfile->length = 0;
+    gfile->pos = 0;
+  }
+  return gfile->length;
 }

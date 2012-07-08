@@ -48,8 +48,10 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     int64_t i = length;
     int n;
     char *data_after = (char*)bson_malloc( LARGE );
+    int truncBytes;
+    char* lowerName;
 
-    gridfs_find_filename( gfs, filename, gfile );
+    ASSERT(gridfs_find_filename( gfs, filename, gfile ) == MONGO_OK);
     ASSERT( gridfile_exists( gfile ) );
 
     stream = fopen( "output", "w+" );
@@ -62,7 +64,11 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     gridfile_read( gfile, length, data_after );
     ASSERT( memcmp( data_before, data_after, (size_t)length ) == 0 );
 
-    ASSERT( strcmp( gridfile_get_filename( gfile ), filename ) == 0 );
+    lowerName = (char*) bson_malloc( strlen( filename ) + 1);
+    strcpy( lowerName, filename);
+    _strlwr( lowerName );
+    ASSERT( strcmp( gridfile_get_filename( gfile ), lowerName ) == 0 );
+    bson_free( lowerName );
 
     ASSERT( gridfile_get_contentlength( gfile ) == (size_t)length );
 
@@ -86,6 +92,23 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     mongo_md5_finish( pms, digest );
     digest2hex( digest, hex_digest );
     ASSERT( strcmp( gridfile_get_md5( gfile ), hex_digest ) == 0 );
+
+    truncBytes = (int) (length > DEFAULT_CHUNK_SIZE * 4 ? length - DEFAULT_CHUNK_SIZE * 2 - 13 : 23); 
+    gridfile_writer_init( gfile, gfs, filename, content_type);
+    ASSERT( gridfile_truncate(gfile, (size_t)(length - truncBytes)) == (size_t)(length - truncBytes));
+    gridfile_writer_done( gfile );
+
+    gridfile_seek(gfile, 0);
+    ASSERT( gridfile_get_contentlength( gfile ) == (size_t)(length - truncBytes) );
+    ASSERT( gridfile_read( gfile, length, data_after ) ==  (size_t)(length - truncBytes));
+    ASSERT( memcmp( data_before, data_after, (size_t)(length - truncBytes) ) == 0 );
+
+    gridfile_writer_init( gfile, gfs, filename, content_type);
+    gridfile_truncate(gfile, 0);
+    gridfile_writer_done( gfile );
+
+    ASSERT( gridfile_get_contentlength( gfile ) == 0 );
+    ASSERT( gridfile_read( gfile, length, data_after ) == 0 );
 
     gridfile_destroy( gfile );
     gridfs_remove_filename( gfs, filename );
@@ -124,6 +147,10 @@ void test_basic() {
         fclose( fd );
         gridfs_store_file( gfs, "input-file", "input-file", "text/html" );
         test_gridfile( gfs, data_before, i, "input-file", "text/html" );
+
+        gfs->caseInsensitive = 1;
+        gridfs_store_file( gfs, "input-file", "input-file", "text/html" );
+        test_gridfile( gfs, data_before, i, "inPut-file", "text/html" );
     }
 
     gridfs_destroy( gfs );
