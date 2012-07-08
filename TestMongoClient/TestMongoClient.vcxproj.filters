@@ -71,5 +71,8 @@
     <ClCompile Include="..\test\write_concern_test.c">
       <Filter>Source Files\Test Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\test\count_delete_test.c">
+      <Filter>Source Files\Test Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
