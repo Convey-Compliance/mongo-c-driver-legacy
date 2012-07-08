@@ -30,7 +30,7 @@ MONGO_EXPORT mongo* mongo_create() {
 
 
 MONGO_EXPORT void mongo_dispose(mongo* conn) {
-    free(conn);
+    bson_free(conn);
 }
 
 MONGO_EXPORT int mongo_get_err(mongo* conn) {
@@ -48,16 +48,15 @@ MONGO_EXPORT int mongo_get_op_timeout(mongo* conn) {
 }
 
 
-const char* _get_host_port(mongo_host_port* hp) {
-    static char _hp[sizeof(hp->host)+12];
+const char* _get_host_port(mongo_host_port* hp) {    
+    char *_hp = (char*) bson_malloc(sizeof(hp->host)+12);
     bson_sprintf(_hp, "%s:%d", hp->host, hp->port);
     return _hp;
 }
 
-
+/* Memory returned by this function must be freed */
 MONGO_EXPORT const char* mongo_get_primary(mongo* conn) {
-    mongo* conn_ = (mongo*)conn;
-    /* JSB */
+    mongo* conn_ = (mongo*)conn;    
     if (conn_->primary->host[0])
       return _get_host_port(conn_->primary); 
     else return NULL;
@@ -81,6 +80,7 @@ MONGO_EXPORT int mongo_get_host_count(mongo* conn) {
 }
 
 
+/* Memory returned by this function must be freed */
 MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i) {
     mongo_replset* r = conn->replset;
     mongo_host_port* hp;
@@ -1184,6 +1184,7 @@ static int mongo_cursor_get_more( mongo_cursor *cursor ) {
         data = mongo_data_append64( data, &cursor->reply->fields.cursorID );
 
         bson_free( cursor->reply );
+        cursor->reply = NULL; /* We need this to prevent double freeing of reply */
         res = mongo_message_send( cursor->conn, mm );
         if( res != MONGO_OK ) {
             mongo_cursor_destroy( cursor );
@@ -1357,8 +1358,12 @@ MONGO_EXPORT int mongo_cursor_destroy( mongo_cursor *cursor ) {
         result = mongo_message_send( conn, mm );
     }
 
-    bson_free( cursor->reply );
-    bson_free( ( void * )cursor->ns );
+    if( cursor->reply ) {
+      bson_free( cursor->reply ); 
+    }
+    if( cursor->ns ) {
+      bson_free( ( void * )cursor->ns );
+    }
 
     if( cursor->flags & MONGO_CURSOR_MUST_FREE )
         bson_free( cursor );
@@ -1470,7 +1475,7 @@ MONGO_EXPORT int mongo_run_command( mongo *conn, const char *db, const bson *com
     bson response = {NULL, 0};
     bson fields;
     int sl = strlen( db );
-    char *ns = bson_malloc( sl + 5 + 1 ); /* ".$cmd" + nul */
+    char *ns = (char*) bson_malloc( sl + 5 + 1 ); /* ".$cmd" + nul */
     int res, success = 0;
 
     strcpy( ns, db );

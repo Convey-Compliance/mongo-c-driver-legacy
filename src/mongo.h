@@ -793,10 +793,10 @@ MONGO_EXPORT void mongo_dispose(mongo* conn);
 MONGO_EXPORT int mongo_get_err(mongo* conn);
 MONGO_EXPORT int mongo_is_connected(mongo* conn);
 MONGO_EXPORT int mongo_get_op_timeout(mongo* conn);
-MONGO_EXPORT const char* mongo_get_primary(mongo* conn);
+MONGO_EXPORT const char* mongo_get_primary(mongo* conn); /* Memory returned by this function must be freed */
 MONGO_EXPORT int mongo_get_socket(mongo* conn) ;
 MONGO_EXPORT int mongo_get_host_count(mongo* conn);
-MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i);
+MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i); /* Memory returned by this function must be freed */
 MONGO_EXPORT mongo_cursor* mongo_cursor_create();
 MONGO_EXPORT void mongo_cursor_dispose(mongo_cursor* cursor);
 MONGO_EXPORT int  mongo_get_server_err(mongo* conn);
