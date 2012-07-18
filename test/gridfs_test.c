@@ -2,6 +2,7 @@
 #include "md5.h"
 #include "mongo.h"
 #include "gridfs.h"
+#include "prepostChunkProcessing.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -21,7 +22,7 @@ void fill_buffer_randomly( char *data, int64_t length ) {
     int64_t i;
     int random;
     char *letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int nletters = strlen( letters )+1;
+    int nletters = (int)strlen( letters )+1;
 
     for ( i = 0; i < length; i++ ) {
         random = rand() % nletters;
@@ -64,7 +65,7 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     gridfile_read( gfile, length, data_after );
     ASSERT( memcmp( data_before, data_after, (size_t)length ) == 0 );
 
-    lowerName = (char*) bson_malloc( strlen( filename ) + 1);
+    lowerName = (char*) bson_malloc( (int)strlen( filename ) + 1);
     strcpy( lowerName, filename);
     _strlwr( lowerName );
     ASSERT( strcmp( gridfile_get_filename( gfile ), lowerName ) == 0 );
@@ -78,23 +79,25 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
 
     ASSERT( memcmp( data_before, data_after, (size_t)length ) == 0 );
 
-    mongo_md5_init( pms );
+    if( !( gfile->flags & GRIDFILE_COMPRESS ) ) {
+      mongo_md5_init( pms );
 
-    n = 0;
-    while( i > INT_MAX  ) {
-        mongo_md5_append( pms, ( const mongo_md5_byte_t * )data_before + ( n * INT_MAX ), INT_MAX );
-        i -= INT_MAX;
-        n += 1;
+      n = 0;
+      while( i > INT_MAX  ) {
+          mongo_md5_append( pms, ( const mongo_md5_byte_t * )data_before + ( n * INT_MAX ), INT_MAX );
+          i -= INT_MAX;
+          n += 1;
+      }
+      if( i > 0 )
+          mongo_md5_append( pms, ( const mongo_md5_byte_t * )data_before + ( n * INT_MAX ), (int)i );
+
+      mongo_md5_finish( pms, digest );
+      digest2hex( digest, hex_digest );
+      ASSERT( strcmp( gridfile_get_md5( gfile ), hex_digest ) == 0 );
     }
-    if( i > 0 )
-        mongo_md5_append( pms, ( const mongo_md5_byte_t * )data_before + ( n * INT_MAX ), (int)i );
-
-    mongo_md5_finish( pms, digest );
-    digest2hex( digest, hex_digest );
-    ASSERT( strcmp( gridfile_get_md5( gfile ), hex_digest ) == 0 );
 
     truncBytes = (int) (length > DEFAULT_CHUNK_SIZE * 4 ? length - DEFAULT_CHUNK_SIZE * 2 - 13 : 23); 
-    gridfile_writer_init( gfile, gfs, filename, content_type);
+    gridfile_writer_init( gfile, gfs, filename, content_type, GRIDFILE_DEFAULT);
     ASSERT( gridfile_truncate(gfile, (size_t)(length - truncBytes)) == (size_t)(length - truncBytes));
     gridfile_writer_done( gfile );
 
@@ -103,7 +106,7 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     ASSERT( gridfile_read( gfile, length, data_after ) ==  (size_t)(length - truncBytes));
     ASSERT( memcmp( data_before, data_after, (size_t)(length - truncBytes) ) == 0 );
 
-    gridfile_writer_init( gfile, gfs, filename, content_type);
+    gridfile_writer_init( gfile, gfs, filename, content_type, GRIDFILE_DEFAULT);
     gridfile_truncate(gfile, 0);
     gridfile_writer_done( gfile );
 
@@ -113,7 +116,7 @@ void test_gridfile( gridfs *gfs, char *data_before, int64_t length, char *filena
     gridfile_destroy( gfile );
     gridfs_remove_filename( gfs, filename );
     free( data_after );
-    unlink( "output" );
+    _unlink( "output" );
 }
 
 void test_basic() {
@@ -138,18 +141,18 @@ void test_basic() {
     for ( i = LOWER; i <= UPPER; i += DELTA ) {
 
         /* Input from buffer */
-        gridfs_store_buffer( gfs, data_before, i, "input-buffer", "text/html" );
+        gridfs_store_buffer( gfs, data_before, i, "input-buffer", "text/html", GRIDFILE_COMPRESS );
         test_gridfile( gfs, data_before, i, "input-buffer", "text/html" );
 
         /* Input from file */
         fd = fopen( "input-file", "w" );
         fwrite( data_before, sizeof( char ), (size_t)i, fd );
         fclose( fd );
-        gridfs_store_file( gfs, "input-file", "input-file", "text/html" );
+        gridfs_store_file( gfs, "input-file", "input-file", "text/html", GRIDFILE_DEFAULT );
         test_gridfile( gfs, data_before, i, "input-file", "text/html" );
 
         gfs->caseInsensitive = 1;
-        gridfs_store_file( gfs, "input-file", "input-file", "text/html" );
+        gridfs_store_file( gfs, "input-file", "input-file", "text/html", GRIDFILE_DEFAULT );
         test_gridfile( gfs, data_before, i, "inPut-file", "text/html" );
     }
 
@@ -159,8 +162,8 @@ void test_basic() {
     free( data_before );
 
     /* Clean up files. */
-    unlink( "input-file" );
-    unlink( "output" );
+    _unlink( "input-file" );
+    _unlink( "output" );
 }
 
 void test_streaming() {
@@ -191,7 +194,7 @@ void test_streaming() {
     fill_buffer_randomly( buf, ( int64_t )LARGE );
 
     gridfs_init( conn, "test", "fs", gfs );
-    gridfile_writer_init( gfile, gfs, "medium", "text/html" );
+    gridfile_writer_init( gfile, gfs, "medium", "text/html", GRIDFILE_DEFAULT );
 
     gridfile_write_buffer( gfile, medium, MEDIUM );
     gridfile_write_buffer( gfile, medium + MEDIUM, MEDIUM );
@@ -201,13 +204,13 @@ void test_streaming() {
 
     gridfs_init( conn, "test", "fs", gfs );
 
-    gridfs_store_buffer( gfs, small, LOWER, "small", "text/html" );
+    gridfs_store_buffer( gfs, small, LOWER, "small", "text/html", GRIDFILE_DEFAULT );
     test_gridfile( gfs, small, LOWER, "small", "text/html" );
     gridfs_destroy( gfs );
 
     gridfs_init( conn, "test", "fs", gfs );
     gridfs_remove_filename( gfs, "large" );
-    gridfile_writer_init( gfile, gfs, "large", "text/html" );
+    gridfile_writer_init( gfile, gfs, "large", "text/html", GRIDFILE_DEFAULT );
     for( n=0; n < ( LARGE / 1024 ); n++ ) {
         gridfile_write_buffer( gfile, buf + ( n * 1024 ), 1024 );
     }
@@ -249,7 +252,7 @@ void test_random_write() {
         int n, bytes_to_write_first;
 
         /* Input from buffer */
-        gridfs_store_buffer( gfs, data_before, i, "input-buffer", "text/html" );
+        gridfs_store_buffer( gfs, data_before, i, "input-buffer", "text/html", GRIDFILE_DEFAULT );
         if ( i > DEFAULT_CHUNK_SIZE * 4 ) {
           n = DEFAULT_CHUNK_SIZE * 3 + 6;
           memcpy(&data_before[j], random_data, n); // Let's overwrite the buffer with bytes crossing multiple chunks
@@ -262,7 +265,7 @@ void test_random_write() {
         }
         gfile = gridfile_create();
         ASSERT(gridfs_find_filename(gfs, "input-buffer", gfile) == 0);
-        gridfile_writer_init(gfile, gfs, "input-buffer", "text/html");
+        gridfile_writer_init(gfile, gfs, "input-buffer", "text/html", GRIDFILE_DEFAULT );
         gridfile_seek(gfile, j); // Seek into the same buffer position within the GridFS file
         if ( bytes_to_write_first ) {
           gridfile_write_buffer(gfile, random_data, bytes_to_write_first); // Let's write 10 bytes first, and later the rest
@@ -281,7 +284,7 @@ void test_random_write() {
         fd = fopen( "input-file", "w" );
         fwrite( data_before, sizeof( char ), (size_t) (j + n > i ? j + n : i), fd );
         fclose( fd );
-        gridfs_store_file( gfs, "input-file", "input-file", "text/html" );
+        gridfs_store_file( gfs, "input-file", "input-file", "text/html", GRIDFILE_DEFAULT );
         test_gridfile( gfs, data_before, j + n > i ? j + n : i, "input-file", "text/html" );
     }
 
@@ -293,8 +296,8 @@ void test_random_write() {
     free( buf );
 
     /* Clean up files. */
-    unlink( "input-file" );
-    unlink( "output" );   
+    _unlink( "input-file" );
+    _unlink( "output" );   
 }
 
 void test_large() {
@@ -302,7 +305,7 @@ void test_large() {
     gridfs gfs[1];
     gridfile gfile[1];
     FILE *fd;
-    int i, n;
+    size_t i, n;
     char *buffer = (char*)bson_malloc( LARGE );
     char *read_buf = (char*)bson_malloc( LARGE );
     int64_t filesize = ( int64_t )1024 * ( int64_t )LARGE;
@@ -341,7 +344,7 @@ void test_large() {
 
     /* Now read the file into GridFS */
     gridfs_remove_filename( gfs, "bigfile" );
-    gridfs_store_file( gfs, "bigfile", "bigfile", "text/html;no_md5" );
+    gridfs_store_file( gfs, "bigfile", "bigfile", "text/html", GRIDFILE_NOMD5 | GRIDFILE_COMPRESS);
 
     gridfs_find_filename( gfs, "bigfile", gfile );
 
@@ -361,7 +364,7 @@ void test_large() {
     /* Read the file using the streaming interface */
     gridfs_remove_filename( gfs, "bigfile" );
     gridfs_remove_filename( gfs, "bigfile-stream" );
-    gridfile_writer_init( gfile, gfs, "bigfile-stream", "text/html;no_md5" );
+    gridfile_writer_init( gfile, gfs, "bigfile-stream", "text/html", GRIDFILE_NOMD5 | GRIDFILE_COMPRESS );
 
     mongo_write_concern_destroy( &wc );
     mongo_write_concern_init(&wc);
@@ -414,7 +417,9 @@ void test_large() {
 int main( void ) {
 /* See https://jira.mongodb.org/browse/CDRIVER-126
  * on why we exclude this test from running on WIN32 */
-  
+
+    initPrepostChunkProcessing(0);
+
     test_basic();
     test_streaming();
     test_random_write();

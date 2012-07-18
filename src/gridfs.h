@@ -38,6 +38,9 @@ typedef struct {
     bson_bool_t caseInsensitive; /**. If true then files are matched in case insensitive fashion */
 } gridfs;
 
+#define GRIDFILE_DEFAULT 0
+#define GRIDFILE_NOMD5 1 
+
 /* A GridFile is a single GridFS file. */
 typedef struct {
     gridfs *gfs;        /**> The GridFS where the GridFile is located */
@@ -50,13 +53,19 @@ typedef struct {
     int chunk_num;      /**> The number of the current chunk being written to */
     char *pending_data; /**> A buffer storing data still to be written to chunks */
     int pending_len;    /**> Length of pending_data buffer */
+    int flags;          /**> Store here special flags such as: No MD5 calculation and Zlib Compression enabled*/
 } gridfile;
+
+typedef int ( *gridfs_preProcessingFunc )( void** targetBuf, size_t* targetLen, void* srcBuf, size_t srcLen, int flags );
+typedef int ( *gridfs_postProcessingFunc )( void** targetBuf, size_t* targetLen, void* srcData, size_t srcLen, int flags );
+typedef size_t ( *gridfs_pendingDataNeededSizeFunc ) (int flags);
 
 MONGO_EXPORT gridfs* gridfs_create();
 MONGO_EXPORT void gridfs_dispose(gridfs* gfs);
 MONGO_EXPORT gridfile* gridfile_create();
 MONGO_EXPORT void gridfile_dispose(gridfile* gf);
 MONGO_EXPORT void gridfile_get_descriptor(gridfile* gf, bson* out);
+MONGO_EXPORT void setBufferProcessingProcs(gridfs_preProcessingFunc preProcessFunc, gridfs_postProcessingFunc postProcessFunc, gridfs_pendingDataNeededSizeFunc pendingDataNeededSizeFunc);
 
 /**
  *  Initializes a GridFS object
@@ -82,10 +91,12 @@ MONGO_EXPORT void gridfs_destroy( gridfs *gfs );
  *  Initializes a gridfile for writing incrementally with gridfs_write_buffer.
  *  Once initialized, you can write any number of buffers with gridfs_write_buffer.
  *  When done, you must call gridfs_writer_done to save the file metadata.
+ *  +-+-+-+-  This modified version of GridFS allows the file to read/write randomly
+ *  +-+-+-+-  when using this function
  *
  */
 MONGO_EXPORT void gridfile_writer_init( gridfile *gfile, gridfs *gfs, const char *remote_name,
-                           const char *content_type );
+                           const char *content_type, int flags );
 
 /**
  *  Write to a GridFS file incrementally. You can call this function any number
@@ -117,7 +128,7 @@ MONGO_EXPORT int gridfile_writer_done( gridfile *gfile );
  */
 MONGO_EXPORT int gridfs_store_buffer( gridfs *gfs, const char *data, gridfs_offset length,
                           const char *remotename,
-                          const char *contenttype );
+                          const char *contenttype, int flags );
 
 /**
  *  Open the file referenced by filename and store it as a GridFS file.
@@ -129,7 +140,7 @@ MONGO_EXPORT int gridfs_store_buffer( gridfs *gfs, const char *data, gridfs_offs
  *  @return - MONGO_OK or MONGO_ERROR.
  */
 MONGO_EXPORT int gridfs_store_file( gridfs *gfs, const char *filename,
-                        const char *remotename, const char *contenttype );
+                        const char *remotename, const char *contenttype, int flags );
 
 /**
  *  Removes the files referenced by filename from the db
@@ -255,8 +266,42 @@ MONGO_EXPORT bson_oid_t *gridfile_get_id(gridfile *gfile);
  *  @return - the data of the field specified
  *            (NULL if none exists)
  */
-const char *gridfile_get_field( gridfile *gfile,
-                                const char *name );
+MONGO_EXPORT const char *gridfile_get_field( gridfile *gfile,
+                                             const char *name );
+
+/**
+ *  Returns the caseInsensitive flag value of gfs
+ *  @param gfile - the working GridFile
+ *
+ *  @return - the caseInsensitive flag of the gfs
+ */
+MONGO_EXPORT bson_bool_t gridfs_get_caseInsensitive(gridfs *gfs);
+
+/**
+ *  Sets the caseInsensitive flag value of gfs
+ *  @param gfs - the working gfs
+ *  @param newValue - the new value for the caseInsensitive flag of gfs
+ *
+ *  @return - void
+ */
+MONGO_EXPORT void gridfs_set_caseInsensitive(gridfs *gfs, bson_bool_t newValue);
+
+/**
+ *  Sets the flags of the GridFile
+ *  @param gfile - the working GridFile
+ *  @param flags - the value of the flags to set on the provided GridFile
+ *
+ *  @return - void
+ */
+MONGO_EXPORT void gridfile_set_flags(gridfile *gfile, int flags);
+
+/**
+ *  gets the flags of the GridFile
+ *  @param gfile - the working GridFile
+  *
+ *  @return - void
+ */
+MONGO_EXPORT int gridfile_get_flags(gridfile *gfile);
 
 /**
  *  Returns a boolean field in GridFile specified by name
@@ -266,7 +311,7 @@ const char *gridfile_get_field( gridfile *gfile,
  *  @return - the boolean of the field specified
  *            (NULL if none exists)
  */
-bson_bool_t gridfile_get_boolean( gridfile *gfile,
+MONGO_EXPORT bson_bool_t gridfile_get_boolean( gridfile *gfile,
                                   const char *name );
 
 /**
