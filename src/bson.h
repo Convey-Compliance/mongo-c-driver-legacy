@@ -135,7 +135,7 @@ typedef struct {
     char *cur;     /**< Pointer to the current position. */
     int dataSize;  /**< The number of bytes allocated to char *data. */
     bson_bool_t finished; /**< When finished, the BSON object can no longer be modified. */
-    int stack[32];        /**< A stack used to keep track of nested BSON elements. */
+    size_t stack[32];        /**< A stack used to keep track of nested BSON elements. */
     int stackPos;         /**< Index of current stack position. */
     int err; /**< Bitfield representing errors or warnings on this buffer */
     char *errstr; /**< A string representation of the most recent error or warning. */
@@ -170,7 +170,7 @@ MONGO_EXPORT void  bson_dispose(bson* b);
  * @return the size.
  */
 MONGO_EXPORT int bson_size( const bson *b );
-MONGO_EXPORT int bson_buffer_size( const bson *b );
+MONGO_EXPORT size_t bson_buffer_size( const bson *b );
 
 /**
  * Print a string representation of a BSON object.

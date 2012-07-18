@@ -33,7 +33,7 @@ typedef int socklen_t;
 # define NI_MAXSERV 32
 #endif
 
-int mongo_env_close_socket( int socket ) {
+int mongo_env_close_socket( size_t socket ) {
     return closesocket( socket );
 }
 
@@ -126,7 +126,7 @@ int mongo_env_socket_connect( mongo *conn, const char *host, int port ) {
             continue;
         }
 
-        status = connect( conn->sock, ai_ptr->ai_addr, ai_ptr->ai_addrlen );
+        status = connect( conn->sock, ai_ptr->ai_addr, (int)ai_ptr->ai_addrlen );
         if ( status != 0 ) {
             __mongo_set_error( conn, MONGO_SOCKET_ERROR, "connect() failed",
                            WSAGetLastError() );

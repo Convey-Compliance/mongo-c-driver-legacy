@@ -63,7 +63,7 @@ MONGO_EXPORT const char* mongo_get_primary(mongo* conn) {
 }
 
 
-MONGO_EXPORT int mongo_get_socket(mongo* conn) {
+MONGO_EXPORT size_t mongo_get_socket(mongo* conn) {
     mongo* conn_ = (mongo*)conn;
     return conn_->sock;
 }
@@ -116,7 +116,7 @@ MONGO_EXPORT const char*  mongo_get_server_err_string(mongo* conn) {
 
 MONGO_EXPORT void __mongo_set_error( mongo *conn, mongo_error_t err, const char *str,
                                int errcode ) {
-    int errstr_size, str_size;
+    size_t errstr_size, str_size;
 
     conn->err = err;
     conn->errcode = errcode;
@@ -427,7 +427,7 @@ MONGO_EXPORT void mongo_replset_init( mongo *conn, const char *name ) {
     conn->replset->primary_connected = 0;
     conn->replset->seeds = NULL;
     conn->replset->hosts = NULL;
-    conn->replset->name = ( char * )bson_malloc( strlen( name ) + 1 );
+    conn->replset->name = ( char * )bson_malloc( (int)strlen( name ) + 1 );
     memcpy( conn->replset->name, name, strlen( name ) + 1  );
 
     conn->primary = (mongo_host_port*) bson_malloc( sizeof( mongo_host_port ) );
@@ -831,13 +831,13 @@ MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
 
     mm = mongo_message_create( 16 /* header */
                                + 4 /* ZERO */
-                               + strlen( ns )
+                               + (int)strlen( ns )
                                + 1 + bson_size( bson )
                                , 0, 0, MONGO_OP_INSERT );
 
     data = &mm->data;
     data = mongo_data_append32( data, &ZERO );
-    data = mongo_data_append( data, ns, strlen( ns ) + 1 );
+    data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
     data = mongo_data_append( data, bson->data, bson_size( bson ) );
 
 
@@ -863,7 +863,7 @@ MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
     mongo_write_concern *write_concern = NULL;
     int i;
     char *data;
-    int overhead =  16 + 4 + strlen( ns ) + 1;
+    int overhead =  16 + 4 + (int)strlen( ns ) + 1;
     int size = overhead;
 
     if( mongo_validate_ns( conn, ns ) != MONGO_OK )
@@ -892,7 +892,7 @@ MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
         data = mongo_data_append32( data, &ONE );
     else
         data = mongo_data_append32( data, &ZERO );
-    data = mongo_data_append( data, ns, strlen( ns ) + 1 );
+    data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
 
     for( i=0; i<count; i++ ) {
         data = mongo_data_append( data, bsons[i]->data, bson_size( bsons[i] ) );
@@ -933,7 +933,7 @@ MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
 
     mm = mongo_message_create( 16 /* header */
                                + 4  /* ZERO */
-                               + strlen( ns ) + 1
+                               + (int)strlen( ns ) + 1
                                + 4  /* flags */
                                + bson_size( cond )
                                + bson_size( op )
@@ -941,7 +941,7 @@ MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
 
     data = &mm->data;
     data = mongo_data_append32( data, &ZERO );
-    data = mongo_data_append( data, ns, strlen( ns ) + 1 );
+    data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
     data = mongo_data_append32( data, &flags );
     data = mongo_data_append( data, cond->data, bson_size( cond ) );
     data = mongo_data_append( data, op->data, bson_size( op ) );
@@ -981,14 +981,14 @@ MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
 
     mm = mongo_message_create( 16  /* header */
                               + 4  /* ZERO */
-                              + strlen( ns ) + 1
+                              + (int)strlen( ns ) + 1
                               + 4  /* ZERO */
                               + bson_size( cond )
                               , 0 , 0 , MONGO_OP_DELETE );
 
     data = &mm->data;
     data = mongo_data_append32( data, &ZERO );
-    data = mongo_data_append( data, ns, strlen( ns ) + 1 );
+    data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
     data = mongo_data_append32( data, &ZERO );
     data = mongo_data_append( data, cond->data, bson_size( cond ) );
 
@@ -1109,7 +1109,7 @@ static int mongo_cursor_op_query( mongo_cursor *cursor ) {
 
     mm = mongo_message_create( 16 + /* header */
                                4 + /*  options */
-                               strlen( cursor->ns ) + 1 + /* ns */
+                               (int)strlen( cursor->ns ) + 1 + /* ns */
                                4 + 4 + /* skip,return */
                                bson_size( cursor->query ) +
                                bson_size( cursor->fields ) ,
@@ -1117,7 +1117,7 @@ static int mongo_cursor_op_query( mongo_cursor *cursor ) {
 
     data = &mm->data;
     data = mongo_data_append32( data , &cursor->options );
-    data = mongo_data_append( data , cursor->ns , strlen( cursor->ns ) + 1 );
+    data = mongo_data_append( data , cursor->ns , (int)strlen( cursor->ns ) + 1 );
     data = mongo_data_append32( data , &cursor->skip );
     data = mongo_data_append32( data , &cursor->limit );
     data = mongo_data_append( data , cursor->query->data , bson_size( cursor->query ) );
@@ -1164,7 +1164,7 @@ static int mongo_cursor_get_more( mongo_cursor *cursor ) {
         return MONGO_ERROR;
     } else {
         char *data;
-        int sl = strlen( cursor->ns )+1;
+        int sl = (int)strlen( cursor->ns )+1;
         int limit = 0;
         mongo_message *mm;
 
@@ -1251,7 +1251,7 @@ MONGO_EXPORT int mongo_find_one( mongo *conn, const char *ns, const bson *query,
 MONGO_EXPORT void mongo_cursor_init( mongo_cursor *cursor, mongo *conn, const char *ns ) {
     memset( cursor, 0, sizeof( mongo_cursor ) );
     cursor->conn = conn;
-    cursor->ns = ( const char * )bson_malloc( strlen( ns ) + 1 );
+    cursor->ns = ( const char * )bson_malloc( (int)strlen( ns ) + 1 );
     strncpy( ( char * )cursor->ns, ns, strlen( ns ) + 1 );
     cursor->current.data = NULL;
 }
@@ -1377,7 +1377,7 @@ MONGO_EXPORT int mongo_create_index( mongo *conn, const char *ns, const bson *ke
     bson b;
     bson_iterator it;
     char name[255] = {'_'};
-    int i = 1;
+    size_t i = 1;
     char idxns[1024];
 
     bson_iterator_init( &it, key );
@@ -1474,7 +1474,7 @@ MONGO_EXPORT int mongo_run_command( mongo *conn, const char *db, const bson *com
     int ret = MONGO_OK;
     bson response = {NULL, 0};
     bson fields;
-    int sl = strlen( db );
+    int sl = (int)strlen( db );
     char *ns = (char*) bson_malloc( sl + 5 + 1 ); /* ".$cmd" + nul */
     int res, success = 0;
 
@@ -1631,9 +1631,9 @@ static void mongo_pass_digest( const char *user, const char *pass, char hex_dige
     mongo_md5_byte_t digest[16];
 
     mongo_md5_init( &st );
-    mongo_md5_append( &st, ( const mongo_md5_byte_t * )user, strlen( user ) );
+    mongo_md5_append( &st, ( const mongo_md5_byte_t * )user, (int)strlen( user ) );
     mongo_md5_append( &st, ( const mongo_md5_byte_t * )":mongo:", 7 );
-    mongo_md5_append( &st, ( const mongo_md5_byte_t * )pass, strlen( pass ) );
+    mongo_md5_append( &st, ( const mongo_md5_byte_t * )pass, (int)strlen( pass ) );
     mongo_md5_finish( &st, digest );
     digest2hex( digest, hex_digest );
 }
@@ -1642,7 +1642,7 @@ MONGO_EXPORT int mongo_cmd_add_user( mongo *conn, const char *db, const char *us
     bson user_obj;
     bson pass_obj;
     char hex_digest[33];
-    char *ns = bson_malloc( strlen( db ) + strlen( ".system.users" ) + 1 );
+    char *ns = bson_malloc( (int)(strlen( db ) + strlen( ".system.users" ) + 1) );
     int res;
 
     strcpy( ns, db );
@@ -1690,8 +1690,8 @@ MONGO_EXPORT bson_bool_t mongo_cmd_authenticate( mongo *conn, const char *db, co
     mongo_pass_digest( user, pass, hex_digest );
 
     mongo_md5_init( &st );
-    mongo_md5_append( &st, ( const mongo_md5_byte_t * )nonce, strlen( nonce ) );
-    mongo_md5_append( &st, ( const mongo_md5_byte_t * )user, strlen( user ) );
+    mongo_md5_append( &st, ( const mongo_md5_byte_t * )nonce, (int)strlen( nonce ) );
+    mongo_md5_append( &st, ( const mongo_md5_byte_t * )user, (int)strlen( user ) );
     mongo_md5_append( &st, ( const mongo_md5_byte_t * )hex_digest, 32 );
     mongo_md5_finish( &st, digest );
     digest2hex( digest, hex_digest );
