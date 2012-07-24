@@ -25,7 +25,7 @@
 #endif
 
 int mongo_write_socket( mongo *conn, const void *buf, int len ) {
-    const char *cbuf = buf;
+    const char *cbuf = (char*)buf;
 #ifdef _WIN32
     int flags = 0;
 #else
@@ -48,7 +48,7 @@ int mongo_write_socket( mongo *conn, const void *buf, int len ) {
 }
 
 int mongo_read_socket( mongo *conn, void *buf, int len ) {
-    char *cbuf = buf;
+    char *cbuf = (char*)buf;
     while ( len ) {
         int sent = recv( conn->sock, cbuf, len, 0 );
         if ( sent == 0 || sent == -1 ) {
