@@ -60,7 +60,7 @@ typedef unsigned __int64 uint64_t;
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 #else
-#error Must compile with c99 or define MONGO_HAVE_STDINT, MONGO_HAVE_UNISTD, MONGO_USE__INT64, or MONGO_USE_LONG_INT.
+#error Must compile with c99 or define MONGO_HAVE_STDINT, MONGO_HAVE_UNISTD, MONGO_USE__INT64, or MONGO_USE_LONG_LONG_INT.
 #endif
 
 #ifdef MONGO_BIG_ENDIAN
@@ -159,7 +159,7 @@ typedef struct {
    READING
    ------------------------------ */
 
-MONGO_EXPORT bson* bson_create();
+MONGO_EXPORT bson* bson_create( void );
 MONGO_EXPORT void  bson_dispose(bson* b);
 
 /**
@@ -206,7 +206,7 @@ MONGO_EXPORT void bson_print_raw( const char *bson , int depth );
 MONGO_EXPORT bson_type bson_find( bson_iterator *it, const bson *obj, const char *name );
 
 
-MONGO_EXPORT bson_iterator* bson_iterator_create();
+MONGO_EXPORT bson_iterator* bson_iterator_create( void );
 MONGO_EXPORT void bson_iterator_dispose(bson_iterator*);
 /**
  * Initialize a bson_iterator.

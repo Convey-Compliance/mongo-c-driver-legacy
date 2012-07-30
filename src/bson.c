@@ -77,7 +77,7 @@ MONGO_EXPORT bson *bson_empty( bson *obj ) {
 }
 
 MONGO_EXPORT int bson_copy( bson *out, const bson *in ) {
-    if ( !out ) return BSON_ERROR;
+    if ( !out || !in ) return BSON_ERROR;
     if ( !in->finished ) return BSON_ERROR;
     bson_init_size( out, bson_size( in ) );
     memcpy( out->data, in->data, bson_size( in ) );
@@ -280,7 +280,7 @@ MONGO_EXPORT void bson_print_raw( const char *data , int depth ) {
    ITERATOR
    ------------------------------ */
 
-MONGO_EXPORT bson_iterator* bson_iterator_create() {
+MONGO_EXPORT bson_iterator* bson_iterator_create( void ) {
     return ( bson_iterator* )malloc( sizeof( bson_iterator ) );
 }
 
@@ -791,7 +791,9 @@ MONGO_EXPORT int bson_append_code_w_scope_n( bson *b, const char *name,
                                 const char *code, int len, const bson *scope ) {
 
     int sl = len + 1;
-    int size = 4 + 4 + sl + bson_size( scope );
+    int size;
+    if ( !scope ) return BSON_ERROR;    
+    size = 4 + 4 + sl + bson_size( scope );
     if ( bson_append_estart( b, BSON_CODEWSCOPE, name, size ) == BSON_ERROR )
         return BSON_ERROR;
     bson_append32( b, &size );
@@ -850,6 +852,7 @@ MONGO_EXPORT int bson_append_regex( bson *b, const char *name, const char *patte
 }
 
 MONGO_EXPORT int bson_append_bson( bson *b, const char *name, const bson *bson ) {
+    if ( !bson ) return BSON_ERROR;
     if ( bson_append_estart( b, BSON_OBJECT, name, bson_size( bson ) ) == BSON_ERROR )
         return BSON_ERROR;
     bson_append( b , bson->data , bson_size( bson ) );

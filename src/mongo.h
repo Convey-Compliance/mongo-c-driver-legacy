@@ -199,7 +199,7 @@ Connection API
 
 /** Initialize sockets for Windows.
  */
-MONGO_EXPORT void mongo_init_sockets();
+MONGO_EXPORT void mongo_init_sockets( void );
 
 /**
  * Initialize a new mongo connection object. You must initialize each mongo
@@ -788,7 +788,7 @@ MONGO_EXPORT void mongo_cmd_reset_error( mongo *conn, const char *db );
 Utility API
 **********************************************************************/
 
-MONGO_EXPORT mongo* mongo_create();
+MONGO_EXPORT mongo* mongo_create( void );
 MONGO_EXPORT void mongo_dispose(mongo* conn);
 MONGO_EXPORT int mongo_get_err(mongo* conn);
 MONGO_EXPORT int mongo_is_connected(mongo* conn);
