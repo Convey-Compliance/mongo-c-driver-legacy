@@ -118,8 +118,8 @@ typedef enum bcon_state_t {
 #define ARRAY_INDEX_STACK_SIZE 1024
 
 #define DOC_PUSH_STATE(return_state) ( doc_stack[doc_stack_pointer++] = (return_state) )
-#define DOC_POP_STATE ( state = doc_stack[--doc_stack_pointer] )
-#define ARRAY_PUSH_RESET_INDEX_STATE(return_state) ( array_index_stack[array_index_stack_pointer++] = array_index, array_index = 0, DOC_PUSH_STATE(return_state) )
+#define DOC_POP_STATE ( state = (bcon_state_t)doc_stack[--doc_stack_pointer] )
+#define ARRAY_PUSH_RESET_INDEX_STATE(return_state) ( array_index_stack[array_index_stack_pointer++] = (unsigned int)array_index, array_index = 0, DOC_PUSH_STATE(return_state) )
 #define ARRAY_POP_INDEX_STATE ( array_index = array_index_stack[--array_index_stack_pointer], DOC_POP_STATE )
 
 #define ARRAY_KEY_STRING(l) (bson_numstr(array_index_buffer, (int)(l)), array_index_buffer)
@@ -248,11 +248,11 @@ bcon_error_t bson_append_bcon_array(bson *b, const bcon *bc) {
  * match with bson_destroy
  */
 bcon_error_t bson_from_bcon(bson *b, const bcon *bc) {
-    bcon_error_t ret = BSON_OK;
+    bcon_error_t ret = (bcon_error_t)BSON_OK;
     bson_init( b );
     ret = bson_append_bcon_with_state( b, bc, State_Element );
     if (ret != BCON_OK) return ret;
-    ret = bson_finish( b );
+    ret = (bcon_error_t)bson_finish( b );
     return ( ret == BSON_OK ? BCON_OK : BCON_BSON_ERROR );
 }
 
