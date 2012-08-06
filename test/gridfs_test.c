@@ -417,7 +417,7 @@ void test_large( void ) {
 int main( void ) {
 /* See https://jira.mongodb.org/browse/CDRIVER-126
  * on why we exclude this test from running on WIN32 */
-
+ 
     initPrepostChunkProcessing(0);
 
     test_basic();

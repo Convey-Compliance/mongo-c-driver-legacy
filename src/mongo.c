@@ -473,6 +473,8 @@ void mongo_parse_host( const char *host_string, mongo_host_port *host_port ) {
     len = split = idx = 0;
 
     /* Split the host_port string at the ':' */
+    #pragma warning(push)
+    #pragma warning(disable:4127)
     while( 1 ) {
         if( *( host_string + len ) == '\0' )
             break;
@@ -481,6 +483,7 @@ void mongo_parse_host( const char *host_string, mongo_host_port *host_port ) {
 
         len++;
     }
+    #pragma warning(pop)
 
     /* If 'split' is set, we know the that port exists;
      * Otherwise, we set the default port. */

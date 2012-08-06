@@ -90,6 +90,9 @@
     <ClInclude Include="prepostChunkProcessing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bcon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -159,6 +162,9 @@
       <Filter>Source Files\Zlib</Filter>
     </ClCompile>
     <ClCompile Include="prepostChunkProcessing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bcon.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

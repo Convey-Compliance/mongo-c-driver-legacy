@@ -256,6 +256,14 @@ bcon_error_t bson_from_bcon(bson *b, const bcon *bc) {
     return ( ret == BSON_OK ? BCON_OK : BCON_BSON_ERROR );
 }
 
+#ifdef WIN64
+  #define POINTER_PRINTSPEC "llx"
+  #define POINTER_TO_INT unsigned long long
+#else
+  #define POINTER_PRINTSPEC "lx"
+  #define POINTER_TO_INT unsigned long
+#endif
+
 void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
     char *typespec = 0;
     char *delim = "";
@@ -283,16 +291,16 @@ void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
                 break;
             case 'P':
                 switch (typespec[2]) {
-                case 's': printf("%sPs(0x%lx,\"%s\")", delim, (unsigned long)bci.Ps, *bci.Ps); break;
-                case 'f': printf("%sPf(0x%lx,%f)", delim, (unsigned long)bci.Pf, *bci.Pf); break;
-                case 'o': printf("%sPo(0x%lx,\"%s\")", delim, (unsigned long)bci.Po, *bci.Po); break;
-                case 'b': printf("%sPb(0x%lx,%d)", delim, (unsigned long)bci.Pb, *bci.Pb); break;
-                case 't': printf("%sPt(0x%lx,%ld)", delim, (unsigned long)bci.Pt, (long)*bci.Pt); break;
-                case 'x': printf("%sPx(0x%lx,\"%s\")", delim, (unsigned long)bci.Px, *bci.Px); break;
-                case 'i': printf("%sPi(0x%lx,%d)", delim, (unsigned long)bci.Pi, *bci.Pi); break;
-                case 'l': printf("%sPl(0x%lx,%ld)", delim, (unsigned long)bci.Pl, *bci.Pl); break;
-                case 'D': printf("%sPD(0x%lx,..)", delim, (unsigned long)bci.PD); break;
-                case 'A': printf("%sPA(0x%lx,....)", delim, (unsigned long)bci.PA); break;
+                case 's': printf("%sPs(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Ps, *bci.Ps); break;
+                case 'f': printf("%sPf(0x%"POINTER_PRINTSPEC",%f)", delim, ( POINTER_TO_INT )bci.Pf, *bci.Pf); break;
+                case 'o': printf("%sPo(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Po, *bci.Po); break;
+                case 'b': printf("%sPb(0x%"POINTER_PRINTSPEC",%d)", delim, ( POINTER_TO_INT )bci.Pb, *bci.Pb); break;
+                case 't': printf("%sPt(0x%"POINTER_PRINTSPEC",%ld)", delim, ( POINTER_TO_INT )bci.Pt, (long)*bci.Pt); break;
+                case 'x': printf("%sPx(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Px, *bci.Px); break;
+                case 'i': printf("%sPi(0x%"POINTER_PRINTSPEC",%d)", delim, ( POINTER_TO_INT )bci.Pi, *bci.Pi); break;
+                case 'l': printf("%sPl(0x%"POINTER_PRINTSPEC",%ld)", delim, ( POINTER_TO_INT )bci.Pl, *bci.Pl); break;
+                case 'D': printf("%sPD(0x%"POINTER_PRINTSPEC",..)", delim, ( POINTER_TO_INT )bci.PD); break;
+                case 'A': printf("%sPA(0x%"POINTER_PRINTSPEC",....)", delim, (POINTER_TO_INT)bci.PA); break;
                 default: printf("\ntypespec:\"%s\"\n", typespec); assert(NOT_REACHED); break;
                 }
                 break;
@@ -366,3 +374,4 @@ void bcon_json_print(bcon *bc, int n) {
     }
     putchar('}');
 }
+

@@ -145,7 +145,7 @@ int mongo_socket_connect( mongo *conn, const char *host, int port ) {
 
     memset( sa.sin_zero , 0 , sizeof( sa.sin_zero ) );
     sa.sin_family = AF_INET;
-    sa.sin_port = htons( port );
+    sa.sin_port = htons( (u_short)port );
     sa.sin_addr.s_addr = inet_addr( host );
     addressSize = sizeof( sa );
 

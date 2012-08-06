@@ -996,7 +996,7 @@ MONGO_EXPORT gridfs_offset gridfile_write_file(gridfile *gfile, FILE *stream) {
   size_t len;
   bson chunk;
   bson_iterator it;
-  const char *data;
+  const char *data = NULL;
   void* targetBuf = NULL; 
   size_t targetBufLen = 0;
   const int num = gridfile_get_numchunks(gfile);
