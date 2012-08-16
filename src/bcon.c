@@ -46,7 +46,7 @@ bcon_token_t bcon_token(char *s) {
     if (s == 0) return Token_EOD;
     switch (s[0]) {
     case ':': if (s[1] != '\0' && s[2] != '\0' && s[3] != '\0' && s[4] == '\0' &&
-                  s[3] == ':' && (s[1] == '_' || s[1] == 'P'))
+                  s[3] == ':' && (s[1] == '_' || s[1] == 'P' || s[1] == 'R'))
                                 return Token_Typespec; break;
     case '{': if (s[1] == '\0') return Token_OpenBrace; break;
     case '}': if (s[1] == '\0') return Token_CloseBrace; break;
@@ -66,8 +66,18 @@ bcon_error_t bson_bcon_key_value(bson *b, const char *key, const char *typespec,
     case '_': /* kv(b, key, utype, bci) */
         switch (utype) {
         case '_': /* fall through */
-        case 's': bson_append_string( b, key, bci.s ); break;
+        case 's': bson_append_string( b, key, bci.s ); break; /* common case */
         case 'f': bson_append_double( b, key, bci.f ); break;
+        case 'D':
+                bson_append_start_object( b, key );
+                ret = bson_append_bcon( b, bci.D );
+                bson_append_finish_object( b );
+            break;
+        case 'A':
+                bson_append_start_array( b, key );
+                ret = bson_append_bcon_array( b, bci.A );
+                bson_append_finish_array( b );
+            break;
         case 'o': if (*bci.o == '\0') bson_oid_gen( &oid ); else bson_oid_from_string( &oid, bci.o ); bson_append_oid( b, key, &oid ); break;
         case 'b': bson_append_bool( b, key, bci.b ); break;
         case 't': bson_append_time_t( b, key, bci.t ); break;
@@ -78,28 +88,55 @@ bcon_error_t bson_bcon_key_value(bson *b, const char *key, const char *typespec,
         default: printf("\nptype:'%c' utype:'%c'\n", ptype, utype); assert(NOT_REACHED); break;
         }
         break;
-    case 'P': /* kpv(b, key, utype, bci) */
+    case 'R': /* krv(b, key, utype, bci) */
         switch (utype) {
-        /*case '_': */ /* fall through */
-        case 's': bson_append_string( b, key, *bci.Ps ); break;
-        case 'f': bson_append_double( b, key, *bci.Pf ); break;
-        case 'o': if (**bci.Po == '\0') bson_oid_gen( &oid ); else bson_oid_from_string( &oid, *bci.Po ); bson_append_oid( b, key, &oid ); break;
-        case 'b': bson_append_bool( b, key, *bci.Pb ); break;
-        case 't': bson_append_time_t( b, key, *bci.Pt ); break;
-        case 'x': bson_append_symbol( b, key, *bci.Px ); break;
-        case 'i': bson_append_int( b, key, *bci.Pi ); break;
-        case 'l': bson_append_long( b, key, *bci.Pl ); break;
+        case 'f': bson_append_double( b, key, *bci.Rf ); break;
+        case 's': bson_append_string( b, key, bci.Rs ); break;
         case 'D':
-            bson_append_start_object( b, key );
-            ret = bson_append_bcon( b, bci.PD );
-            bson_append_finish_object( b );
+                bson_append_start_object( b, key );
+                ret = bson_append_bcon( b, bci.RD );
+                bson_append_finish_object( b );
             break;
         case 'A':
-            bson_append_start_array( b, key );
-            ret = bson_append_bcon_array( b, bci.PA );
-            bson_append_finish_array( b );
+                bson_append_start_array( b, key );
+                ret = bson_append_bcon_array( b, bci.RA );
+                bson_append_finish_array( b );
             break;
+        case 'o': if (*bci.o == '\0') bson_oid_gen( &oid ); else bson_oid_from_string( &oid, bci.o ); bson_append_oid( b, key, &oid ); break;
+        case 'b': bson_append_bool( b, key, *bci.Rb ); break;
+        case 't': bson_append_time_t( b, key, *bci.Rt ); break;
+        case 'x': bson_append_symbol( b, key, bci.Rx ); break;
+        case 'i': bson_append_int( b, key, *bci.Ri ); break;
+        case 'l': bson_append_long( b, key, *bci.Rl ); break;
         default: printf("\nptype:'%c' utype:'%c'\n", ptype, utype); assert(NOT_REACHED); break;
+        }
+        break;
+    case 'P': /* kpv(b, key, utype, bci) */
+        if (*bci.Pv != 0) {
+            switch (utype) {
+            case 'f': bson_append_double( b, key, **bci.Pf ); break;
+            case 's': bson_append_string( b, key, *bci.Ps ); break;
+            case 'D':
+                    bson_append_start_object( b, key );
+                    ret = bson_append_bcon( b, *bci.PD );
+                    bson_append_finish_object( b );
+                break;
+            case 'A':
+                    bson_append_start_array( b, key );
+                    ret = bson_append_bcon_array( b, *bci.PA );
+                    bson_append_finish_array( b );
+                break;
+            case 'o': if (**bci.Po == '\0') bson_oid_gen( &oid );
+                          else bson_oid_from_string( &oid, *bci.Po );
+                          bson_append_oid( b, key, &oid );
+                      break;
+            case 'b': bson_append_bool( b, key, **bci.Pb ); break;
+            case 't': bson_append_time_t( b, key, **bci.Pt ); break;
+            case 'x': if (*bci.Px != 0) bson_append_symbol( b, key, *bci.Px ); break;
+            case 'i': bson_append_int( b, key, **bci.Pi ); break;
+            case 'l': bson_append_long( b, key, **bci.Pl ); break;
+            default: printf("\nptype:'%c' utype:'%c'\n", ptype, utype); assert(NOT_REACHED); break;
+            }
         }
         break;
     default:
@@ -277,8 +314,10 @@ void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
             switch (typespec[1]) {
             case '_':
                 switch (typespec[2]) {
-                case 's': printf("%s\"%s\"", delim, bci.s); break;
                 case 'f': printf("%s%f", delim, bci.f); break;
+                case 's': printf("%s\"%s\"", delim, bci.s); break;
+                case 'D': printf("%sPD(0x%lx,..)", delim, (unsigned long)bci.D); break;
+                case 'A': printf("%sPA(0x%lx,....)", delim, (unsigned long)bci.A); break;
                 case 'o': printf("%s\"%s\"", delim, bci.o); break;
                 case 'b': printf("%s%d", delim, bci.b); break;
                 case 't': printf("%s%ld", delim, (long)bci.t); break;
@@ -286,6 +325,21 @@ void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
                 case 'x': printf("%s\"%s\"", delim, bci.x); break;
                 case 'i': printf("%s%d", delim, bci.i); break;
                 case 'l': printf("%s%ld", delim, bci.l); break;
+                default: printf("\ntypespec:\"%s\"\n", typespec); assert(NOT_REACHED); break;
+                }
+                break;
+            case 'R':
+                switch (typespec[2]) {
+                case 'f': printf("%sRf(0x%lx,%f)", delim, (unsigned long)bci.Rf, *bci.Rf); break;
+                case 's': printf("%sRs(0x%lx,\"%s\")", delim, (unsigned long)bci.Rs, bci.Rs); break;
+                case 'D': printf("%sRD(0x%lx,..)", delim, (unsigned long)bci.RD); break;
+                case 'A': printf("%sRA(0x%lx,....)", delim, (unsigned long)bci.RA); break;
+                case 'o': printf("%sRo(0x%lx,\"%s\")", delim, (unsigned long)bci.Ro, bci.Ro); break;
+                case 'b': printf("%sRb(0x%lx,%d)", delim, (unsigned long)bci.Rb, *bci.Rb); break;
+                case 't': printf("%sRt(0x%lx,%ld)", delim, (unsigned long)bci.Rt, (long)*bci.Rt); break;
+                case 'x': printf("%sRx(0x%lx,\"%s\")", delim, (unsigned long)bci.Rx, bci.Rx); break;
+                case 'i': printf("%sRi(0x%lx,%d)", delim, (unsigned long)bci.Ri, *bci.Ri); break;
+                case 'l': printf("%sRl(0x%lx,%ld)", delim, (unsigned long)bci.Rl, *bci.Rl); break;
                 default: printf("\ntypespec:\"%s\"\n", typespec); assert(NOT_REACHED); break;
                 }
                 break;
