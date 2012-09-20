@@ -520,7 +520,7 @@ static void mongo_replset_check_seed( mongo *conn ) {
             while( bson_iterator_next( &it_sub ) ) {
                 host_string = bson_iterator_string( &it_sub );
 
-                host_port = bson_malloc( sizeof( mongo_host_port ) );
+                host_port = (mongo_host_port *)bson_malloc( sizeof( mongo_host_port ) );
 
                 if( host_port ) {
                     mongo_parse_host( host_string, host_port );
@@ -698,12 +698,18 @@ MONGO_EXPORT void mongo_destroy( mongo *conn ) {
     if( conn->replset ) {
         mongo_replset_free_list( &conn->replset->seeds );
         mongo_replset_free_list( &conn->replset->hosts );
-        bson_free( conn->replset->name );
+        if ( conn->replset->name ) {
+          bson_free( conn->replset->name );
+          conn->replset->name = NULL;
+        }        
         bson_free( conn->replset );
         conn->replset = NULL;
     }
 
-    bson_free( conn->primary );
+    if( conn->primary ) {
+      bson_free( conn->primary );
+      conn->primary = NULL;
+    }
 
     mongo_clear_errors( conn );
 }
@@ -738,7 +744,7 @@ static int mongo_bson_valid( mongo *conn, const bson *bson, int write ) {
         }
     }
 
-    conn->err = 0;
+    conn->err = MONGO_CONN_SUCCESS;
 
     return MONGO_OK;
 }
@@ -1073,7 +1079,10 @@ MONGO_EXPORT void mongo_write_concern_destroy( mongo_write_concern *write_concer
     if( write_concern->cmd )
         bson_destroy( write_concern->cmd );
 
-    bson_free( write_concern->cmd );
+    if( write_concern->cmd ) {
+      bson_free( write_concern->cmd );
+      write_concern->cmd = NULL;
+    }
 }
 
 MONGO_EXPORT void mongo_set_write_concern( mongo *conn,
@@ -1186,8 +1195,10 @@ static int mongo_cursor_get_more( mongo_cursor *cursor ) {
         data = mongo_data_append32( data, &limit );
         mongo_data_append64( data, &cursor->reply->fields.cursorID );
 
-        bson_free( cursor->reply );
-        cursor->reply = NULL; /* We need this to prevent double freeing of reply */
+        if( cursor->reply ) {
+          bson_free( cursor->reply );
+          cursor->reply = NULL; /* We need this to prevent double freeing of reply */
+        }
         res = mongo_message_send( cursor->conn, mm );
         if( res != MONGO_OK ) {
             mongo_cursor_destroy( cursor );
@@ -1367,13 +1378,15 @@ MONGO_EXPORT int mongo_cursor_destroy( mongo_cursor *cursor ) {
 
     if( cursor->reply ) {
       bson_free( cursor->reply ); 
+      cursor->reply = NULL;
     }
     if( cursor->ns ) {
       bson_free( ( void * )cursor->ns );
+      cursor->ns = NULL;
     }
 
     if( cursor->flags & MONGO_CURSOR_MUST_FREE )
-        bson_free( cursor );
+      bson_free( cursor );
 
     return result;
 }
@@ -1649,7 +1662,7 @@ MONGO_EXPORT int mongo_cmd_add_user( mongo *conn, const char *db, const char *us
     bson user_obj;
     bson pass_obj;
     char hex_digest[33];
-    char *ns = bson_malloc( (int)(strlen( db ) + strlen( ".system.users" ) + 1) );
+    char *ns = (char*)bson_malloc( (int)(strlen( db ) + strlen( ".system.users" ) + 1) );
     int res;
 
     strcpy( ns, db );

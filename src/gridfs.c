@@ -82,8 +82,10 @@ static bson *chunk_new(bson_oid_t id, int chunkNumber, void** dataBuf, void* src
 }
 
 static void chunk_free(bson *oChunk) {
-  bson_destroy(oChunk);
-  bson_free(oChunk);
+  if( oChunk ) {
+    bson_destroy(oChunk);
+    bson_free(oChunk);
+  }
 }
 /* End of memory allocation functions */
 
@@ -96,6 +98,25 @@ MONGO_EXPORT void setBufferProcessingProcs(gridfs_preProcessingFunc preProcessFu
 /* -------------- */
 /* gridfs methods */
 /* -------------- */
+
+static void gridfs_freeFields( gridfs *gfs ) {
+  if( gfs->dbname ) {
+    bson_free((char*)gfs->dbname);
+    gfs->dbname = NULL;
+  }
+  if( gfs->prefix ) {
+    bson_free((char*)gfs->prefix);
+    gfs->prefix = NULL;
+  }
+  if( gfs->files_ns ) {
+    bson_free((char*)gfs->files_ns);
+    gfs->files_ns = NULL;
+  }
+  if( gfs->chunks_ns ) {
+    bson_free((char*)gfs->chunks_ns);
+    gfs->chunks_ns = NULL;
+  }      
+}
 
 /* gridfs constructor */
 MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *prefix, gridfs *gfs) {
@@ -138,10 +159,7 @@ MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *pref
   success = (mongo_create_index(gfs->client, gfs->files_ns, &b, options, NULL) == MONGO_OK);
   bson_destroy(&b);
   if (!success) {
-    bson_free((char*)gfs->dbname);
-    bson_free((char*)gfs->prefix);
-    bson_free((char*)gfs->files_ns);
-    bson_free((char*)gfs->chunks_ns);
+    gridfs_freeFields( gfs );
     return MONGO_ERROR;
   }
 
@@ -153,10 +171,7 @@ MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *pref
   success = (mongo_create_index(gfs->client, gfs->chunks_ns, &b, options, NULL) == MONGO_OK);
   bson_destroy(&b);
   if (!success) {
-    bson_free((char*)gfs->dbname);
-    bson_free((char*)gfs->prefix);
-    bson_free((char*)gfs->files_ns);
-    bson_free((char*)gfs->chunks_ns);
+    gridfs_freeFields( gfs );    
     return MONGO_ERROR;
   }
 
@@ -167,15 +182,8 @@ MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *pref
 MONGO_EXPORT void gridfs_destroy(gridfs *gfs) {
   if (gfs == NULL) {
     return ;
-  } if (gfs->dbname) {
-    bson_free((char*)gfs->dbname);
-  } if (gfs->prefix) {
-    bson_free((char*)gfs->prefix);
-  } if (gfs->files_ns) {
-    bson_free((char*)gfs->files_ns);
-  } if (gfs->chunks_ns) {
-    bson_free((char*)gfs->chunks_ns);
   } 
+  gridfs_freeFields( gfs );
 }
 
 /* gridfs accesors */
@@ -495,8 +503,14 @@ MONGO_EXPORT int gridfile_writer_done(gridfile *gfile) {
   /* insert into files collection */
   response = gridfs_insert_file(gfile->gfs, gfile->remote_name, gfile->id, gfile->length, gfile->content_type, gfile->flags);
 
-  bson_free(gfile->remote_name);
-  bson_free(gfile->content_type);
+  if( gfile->remote_name ) {
+    bson_free(gfile->remote_name);
+    gfile->remote_name = NULL;
+  }
+  if( gfile->content_type ) {
+    bson_free(gfile->content_type);
+    gfile->content_type = NULL;
+  }
 
   return response;
 }
@@ -573,9 +587,12 @@ MONGO_EXPORT void gridfile_writer_init(gridfile *gfile, gridfs *gfs, const char 
 
 MONGO_EXPORT void gridfile_destroy(gridfile *gfile)
 
- {
-  bson_destroy(gfile->meta);
-  bson_free(gfile->meta);
+{
+  if( gfile->meta ) { 
+    bson_destroy(gfile->meta);
+    bson_free(gfile->meta);
+    gfile->meta = NULL;
+  }
 }
 
 /* gridfile accessors */
