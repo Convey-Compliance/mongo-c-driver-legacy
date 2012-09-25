@@ -30,6 +30,9 @@ typedef uint64_t gridfs_offset;
 
 /* A GridFS represents a single collection of GridFS files in the database. */
 typedef struct {
+#ifdef MONGO_MEMORY_PROTECTION
+    int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
+#endif
     mongo *client; /**> The client to db-connection. */
     const char *dbname; /**> The root database name */
     const char *prefix; /**> The prefix of the GridFS's collections, default is NULL */
@@ -43,6 +46,9 @@ typedef struct {
 
 /* A GridFile is a single GridFS file. */
 typedef struct {
+#ifdef MONGO_MEMORY_PROTECTION
+    int mongo_sig;      /** MONGO_SIGNATURE to validate object for memory corruption */
+#endif
     gridfs *gfs;        /**> The GridFS where the GridFile is located */
     bson *meta;         /**> The GridFile's bson object where all its metadata is located */
     gridfs_offset pos;  /**> The position is the offset in the file */
@@ -55,6 +61,12 @@ typedef struct {
     int pending_len;    /**> Length of pending_data buffer */
     int flags;          /**> Store here special flags such as: No MD5 calculation and Zlib Compression enabled*/
 } gridfile;
+
+#ifdef MONGO_MEMORY_PROTECTION
+  #define INIT_GRIDFILE  {MONGO_SIGNATURE}
+#else
+  #define INIT_GRIDFILE  {NULL}
+#endif
 
 typedef int ( *gridfs_preProcessingFunc )( void** targetBuf, size_t* targetLen, void* srcBuf, size_t srcLen, int flags );
 typedef int ( *gridfs_postProcessingFunc )( void** targetBuf, size_t* targetLen, void* srcData, size_t srcLen, int flags );

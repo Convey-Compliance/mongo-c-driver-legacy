@@ -36,7 +36,7 @@ static int ZlibPostProcessChunk(void** targetBuf, size_t* targetLen, void* srcDa
   return 0;
 }
 
-static size_t ZlibDendingDataNeededSize (int flags) {
+static size_t ZlibPendingDataNeededSize (int flags) {
   if( flags & GRIDFILE_COMPRESS ) {
     return compressBound( DEFAULT_CHUNK_SIZE );
   } else {
@@ -45,7 +45,7 @@ static size_t ZlibDendingDataNeededSize (int flags) {
 }
 
 MONGO_EXPORT int initPrepostChunkProcessing( int flags ){
-  setBufferProcessingProcs( ZlibPreProcessChunk, ZlibPostProcessChunk, ZlibDendingDataNeededSize );  
+  setBufferProcessingProcs( ZlibPreProcessChunk, ZlibPostProcessChunk, ZlibPendingDataNeededSize );  
   return 0;
 }
 
