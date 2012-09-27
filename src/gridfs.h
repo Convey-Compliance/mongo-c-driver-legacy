@@ -60,6 +60,7 @@ typedef struct {
     char *pending_data; /**> A buffer storing data still to be written to chunks */
     int pending_len;    /**> Length of pending_data buffer */
     int flags;          /**> Store here special flags such as: No MD5 calculation and Zlib Compression enabled*/
+    int chunkSize;   /**> Let's cache here the cache size to avoid accesing it on the Meta mongo object every time is needed */
 } gridfile;
 
 #ifdef MONGO_MEMORY_PROTECTION
