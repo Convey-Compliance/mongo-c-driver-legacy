@@ -22,6 +22,9 @@ change (support for `write_concern`) was added in v0.6.
 :doc:`bson`
     How to work with BSON objects.
 
+:doc:`bcon`
+    How to use BCON for concise, readable, and maintainable definition of BSON documents.
+
 :doc:`connections`
     How to connect to single nodes and to replica sets.
 
