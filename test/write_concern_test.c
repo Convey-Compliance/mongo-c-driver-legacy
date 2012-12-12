@@ -315,11 +315,9 @@ void test_insert( mongo *conn ) {
     bson_destroy( b2 );
     bson_destroy( b3 );
     mongo_write_concern_destroy( wc );
-=======
     bson_destroy( b4 );
     mongo_write_concern_destroy( wc0 );
     mongo_write_concern_destroy( wc1 );
->>>>>>> mong-c-driver(Mongo)/master
 }
 
 int main() {
