@@ -110,9 +110,6 @@
     <ClCompile Include="encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="env_win32.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gridfs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -165,6 +162,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="bcon.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="env.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

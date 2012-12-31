@@ -382,7 +382,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="env_win32.c" />
+    <ClCompile Include="env.c" />
     <ClCompile Include="gridfs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">CompileAsC</CompileAs>

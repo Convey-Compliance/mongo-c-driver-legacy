@@ -52,7 +52,7 @@ static int ( *oid_inc_func )( void )  = NULL;
    READING
    ------------------------------ */
 
-MONGO_EXPORT bson* bson_create() {
+MONGO_EXPORT bson* bson_create( void ) {
   bson *b = (bson*)bson_malloc(sizeof(bson));
   b->data = NULL;
   ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
@@ -259,11 +259,11 @@ MONGO_EXPORT void bson_print_raw( const char *data , int depth ) {
             break;
         case BSON_CODEWSCOPE:
             bson_printf( "BSON_CODE_W_SCOPE: %s", bson_iterator_code( &i ) );
-            /* bson_init( &scope ); // review - stepped on by bson_iterator_code_scope? */
+            /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
             bson_iterator_code_scope( &i, &scope );
             bson_printf( "\n\t SCOPE: " );
             bson_print( &scope );
-            /* bson_destroy( &scope ); // review - causes free error */
+            /* bson_destroy( &scope ); */ /* review - causes free error */
             break;
         case BSON_INT:
             bson_printf( "%d" , bson_iterator_int( &i ) );
@@ -576,7 +576,8 @@ MONGO_EXPORT void bson_iterator_code_scope( const bson_iterator *i, bson *scope 
         bson_init_data( scope, ( void * )( bson_iterator_value( i )+8+code_len ) );
         _bson_reset( scope );
         scope->finished = 1;
-    } else {
+    }
+    else {
         bson_empty( scope );
     }
 }
@@ -823,7 +824,7 @@ MONGO_EXPORT int bson_append_undefined( bson *b, const char *name ) {
 }
 
 static int bson_append_string_base( bson *b, const char *name,
-                             const char *value, int len, bson_type type ) {
+                                    const char *value, int len, bson_type type ) {
 
     int sl = len + 1;
     check_mongo_object( (void*)b );
@@ -869,7 +870,7 @@ MONGO_EXPORT int bson_append_code_n( bson *b, const char *name, const char *valu
 }
 
 MONGO_EXPORT int bson_append_code_w_scope_n( bson *b, const char *name,
-                                const char *code, int len, const bson *scope ) {
+        const char *code, int len, const bson *scope ) {
 
     int sl = len + 1;
     int size;
@@ -902,7 +903,8 @@ MONGO_EXPORT int bson_append_binary( bson *b, const char *name, char type, const
         bson_append_byte( b, type );
         bson_append32( b, &len );
         bson_append( b, str, len );
-    } else {
+    }
+    else {
         if ( bson_append_estart( b, BSON_BINDATA, name, 4+1+len ) == BSON_ERROR )
             return BSON_ERROR;
         bson_append32( b, &len );
@@ -1033,7 +1035,7 @@ MONGO_EXPORT int bson_append_finish_object( bson *b ) {
 }
 
 MONGO_EXPORT double bson_int64_to_double( int64_t i64 ) {
-  return (double)i64;
+    return (double)i64;
 }
 
 MONGO_EXPORT int bson_append_finish_array( bson *b ) {
@@ -1071,7 +1073,7 @@ void *bson_realloc( void *ptr, int size ) {
 
 int _bson_errprintf( const char *format, ... ) {
     va_list ap;
-    int ret;
+    int ret = 0;
     va_start( ap, format );
 #ifndef R_SAFETY_NET
     ret = vfprintf( stderr, format, ap );
