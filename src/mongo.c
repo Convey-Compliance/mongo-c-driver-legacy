@@ -526,7 +526,7 @@ MONGO_EXPORT void mongo_replica_set_add_seed( mongo *conn, const char *host, int
 
 MONGO_EXPORT void mongo_replset_add_seed( mongo *conn, const char *host, int port ) {
   check_mongo_object(conn);
-  bson_errprintf(stderr, "WARNING: mongo_replset_add_seed() is deprecated, please use mongo_replica_set_add_seed()\n");
+  bson_errprintf("WARNING: mongo_replset_add_seed() is deprecated, please use mongo_replica_set_add_seed()\n");
   mongo_replica_set_add_node( &conn->replica_set->seeds, host, port );
 }
 
@@ -1378,7 +1378,7 @@ MONGO_EXPORT int mongo_find_one( mongo *conn, const char *ns, const bson *query,
 
     if ( mongo_cursor_next( &cursor ) == MONGO_OK ) {
         if( out ) {
-            bson_init_size( out, bson_size( (bson *)&cursor->current ) );
+            bson_init_size( out, bson_size( (bson *)&cursor.current ) );
             memcpy( out->data, cursor.current.data,
                     bson_size( (bson *)&cursor.current ) );
             out->finished = 1;
