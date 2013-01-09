@@ -58,7 +58,7 @@ typedef struct {
     gridfs_offset length; /**> The length of this gridfile */
     int chunk_num;      /**> The number of the current chunk being written to */
     char *pending_data; /**> A buffer storing data still to be written to chunks */
-    int pending_len;    /**> Length of pending_data buffer */
+    size_t pending_len;    /**> Length of pending_data buffer */
     int flags;          /**> Store here special flags such as: No MD5 calculation and Zlib Compression enabled*/
     int chunkSize;   /**> Let's cache here the cache size to avoid accesing it on the Meta mongo object every time is needed */
 } gridfile;
@@ -361,7 +361,7 @@ MONGO_EXPORT void gridfile_get_chunk( gridfile *gfile, int n, bson* out );
  *
  *  @return - mongo_cursor of the chunks (must be destroyed after use)
  */
-MONGO_EXPORT mongo_cursor *gridfile_get_chunks( gridfile *gfile, int start, int size );
+MONGO_EXPORT mongo_cursor *gridfile_get_chunks( gridfile *gfile, size_t start, size_t size );
 
 /**
  *  Writes the GridFile to a stream

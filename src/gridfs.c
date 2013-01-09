@@ -893,7 +893,7 @@ MONGO_EXPORT void gridfile_write_buffer(gridfile *gfile, const char *data, gridf
 
   bson *oChunk;
   bson q = INIT_BSON;
-  int buf_pos, buf_bytes_to_write;    
+  size_t buf_pos, buf_bytes_to_write;    
   gridfs_offset bytes_left = length;
   void* targetBuf = NULL;
   int memAllocated = 0;
@@ -982,7 +982,7 @@ MONGO_EXPORT void gridfile_get_chunk(gridfile *gfile, int n, bson *out) {
   }
 }
 
-MONGO_EXPORT mongo_cursor *gridfile_get_chunks(gridfile *gfile, int start, int size) {
+MONGO_EXPORT mongo_cursor *gridfile_get_chunks(gridfile *gfile, size_t start, size_t size) {
   bson_iterator it = INIT_ITERATOR;
   bson_oid_t id;
   bson gte = INIT_BSON;
@@ -1002,10 +1002,10 @@ MONGO_EXPORT mongo_cursor *gridfile_get_chunks(gridfile *gfile, int start, int s
   bson_init(&query);
   bson_append_oid(&query, "files_id", &id);
   if (size == 1) {
-    bson_append_int(&query, "n", start);
+    bson_append_int(&query, "n", (int)start);
   } else {
     bson_init(&gte);
-    bson_append_int(&gte, "$gte", start);
+    bson_append_int(&gte, "$gte", (int)start);
     bson_finish(&gte);
     bson_append_bson(&query, "n", &gte);
     bson_destroy(&gte);
@@ -1021,7 +1021,7 @@ MONGO_EXPORT mongo_cursor *gridfile_get_chunks(gridfile *gfile, int start, int s
   bson_append_bson(&command, "orderby", &orderby);
   bson_finish(&command);
 
-  cursor = mongo_find(gfile->gfs->client, gfile->gfs->chunks_ns,  &command, NULL, size, 0, 0);
+  cursor = mongo_find(gfile->gfs->client, gfile->gfs->chunks_ns,  &command, NULL, (int)size, 0, 0);
 
   bson_destroy(&command);
   bson_destroy(&query);

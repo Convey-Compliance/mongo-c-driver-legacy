@@ -2,7 +2,7 @@
 
 MAJOR_VERSION = "0"
 MINOR_VERSION = "7"
-PATCH_VERSION = "0"
+PATCH_VERSION = "1"
 VERSION = MAJOR_VERSION + "." + MINOR_VERSION + "." + PATCH_VERSION
 
 # --- options ----
@@ -99,7 +99,7 @@ elif 'win32' == os.sys.platform:
 if os.sys.platform in ["darwin", "linux2"]:
     env.Append( CPPFLAGS="-pedantic -Wall -ggdb -DMONGO_HAVE_STDINT" )
     if not GetOption('standard_env'):
-        env.Append( CPPFLAGS=" -D_POSIX_SOURCE" )
+        env.Append( CPPFLAGS=" -D_POSIX_SOURCE -D_DARWIN_C_SOURCE" )
     env.Append( CPPPATH=["/opt/local/include/"] )
     env.Append( LIBPATH=["/opt/local/lib/"] )
 
@@ -156,7 +156,7 @@ env.Append( CPPPATH=["src/"] )
 env.Append( CPPFLAGS=" -DMONGO_DLL_BUILD" )
 coreFiles = ["src/md5.c" ]
 mFiles = [ "src/mongo.c", NET_LIB, "src/gridfs.c"]
-bFiles = [ "src/bson.c", "src/numbers.c", "src/encoding.c"]
+bFiles = [ "src/bcon.c", "src/bson.c", "src/numbers.c", "src/encoding.c"]
 
 mHeaders = ["src/mongo.h"]
 bHeaders = ["src/bson.h"]
@@ -273,7 +273,7 @@ def run_tests( root, tests, env, alias ):
         test_alias = env.Alias(alias, [test], test[0].abspath + ' 2> ' + os.path.devnull)
         AlwaysBuild(test_alias)
 
-tests = Split("write_concern commands sizes resize endian_swap bson bson_subobject simple update errors "
+tests = Split("write_concern commands sizes resize endian_swap bson bson_subobject bcon simple update errors "
 "count_delete auth gridfs validate examples helpers oid functions cursors")
 tests += PLATFORM_TESTS
 
