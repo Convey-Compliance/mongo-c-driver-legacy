@@ -404,4 +404,11 @@ MONGO_EXPORT gridfs_offset gridfile_seek( gridfile *gfile, gridfs_offset offset 
  */
 MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newSize);
 
+/**
+ *  @param gfile - the working GridFile
+ *  @param newSize - the new size of file
+ *
+ */
+MONGO_EXPORT gridfs_offset gridfile_set_size(gridfile *gfile, gridfs_offset newSize);
+
 #endif

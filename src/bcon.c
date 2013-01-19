@@ -34,12 +34,6 @@ char *bcon_errstr[] = {
     "bson finish error"
 };
 
-static int bcon_error(bson *b, const bcon *bc, size_t i, bcon_error_t err) {
-    b->err = err;
-    b->errstr = bcon_errstr[err];
-    return BCON_ERROR;
-}
-
 bcon_error_t bson_append_bcon_array(bson *b, const bcon *bc);
 
 /* should be static, but it used by test files */
@@ -352,16 +346,17 @@ void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
                 break;
             case 'P':
                 switch (typespec[2]) {
-                case 's': printf("%sPs(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Ps, *bci.Ps); break;
                 case 'f': printf("%sPf(0x%"POINTER_PRINTSPEC",%f)", delim, ( POINTER_TO_INT )bci.Pf, *bci.Pf); break;
+                case 's': printf("%sPs(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Ps, *bci.Ps); break;                
+                case 'D': printf("%sPD(0x%"POINTER_PRINTSPEC",..)", delim, ( POINTER_TO_INT )bci.PD); break;
+                case 'A': printf("%sPA(0x%"POINTER_PRINTSPEC",....)", delim, (POINTER_TO_INT)bci.PA); break;
                 case 'o': printf("%sPo(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Po, *bci.Po); break;
                 case 'b': printf("%sPb(0x%"POINTER_PRINTSPEC",%d)", delim, ( POINTER_TO_INT )bci.Pb, *bci.Pb); break;
                 case 't': printf("%sPt(0x%"POINTER_PRINTSPEC",%"TIME_T_PRINTSPEC")", delim, ( POINTER_TO_INT )bci.Pt, ( TIME_T_TO_INT )*bci.Pt); break;
                 case 'x': printf("%sPx(0x%"POINTER_PRINTSPEC",\"%s\")", delim, ( POINTER_TO_INT )bci.Px, *bci.Px); break;
                 case 'i': printf("%sPi(0x%"POINTER_PRINTSPEC",%d)", delim, ( POINTER_TO_INT )bci.Pi, *bci.Pi); break;
-                case 'l': printf("%sPl(0x%"POINTER_PRINTSPEC",%ld)", delim, ( POINTER_TO_INT )bci.Pl, *bci.Pl); break;
-                case 'D': printf("%sPD(0x%"POINTER_PRINTSPEC",..)", delim, ( POINTER_TO_INT )bci.PD); break;
-                case 'A': printf("%sPA(0x%"POINTER_PRINTSPEC",....)", delim, (POINTER_TO_INT)bci.PA); break;
+                case 'l': printf("%sPl(0x%"POINTER_PRINTSPEC",%ld)", delim, ( POINTER_TO_INT )bci.Pl, *bci.Pl); break;                
+
                 default: printf("\ntypespec:\"%s\"\n", typespec); assert(NOT_REACHED); break;
                 }
                 break;
@@ -387,52 +382,3 @@ void bcon_print(const bcon *bc) { /* prints internal representation, not JSON */
     }
     putchar('}');
 }
-
-/* TODO - incomplete */
-static void bcon_json_print(bcon *bc, int n) {
-    int t = 0;
-    int key_value_count = 0;
-    char *s;
-    int end_of_data;
-    bcon *bcp;
-    putchar('{');
-    for (end_of_data = 0, bcp = bc; !end_of_data; bcp++) {
-        bcon bci = *bcp;
-        switch (t) {
-        case 'l':
-            if (key_value_count & 0x1) putchar(':');
-            printf("%ld", bci.l);
-            t = 0;
-            key_value_count++;
-            break;
-        case 's': /* fall through */
-        default:
-            s = bci.s;
-            switch (*s) {
-            case ':':
-                ++s;
-                t = *++s;
-                break;
-            case '{':
-                if (key_value_count & 0x1) putchar(':');
-                putchar(*s);
-                key_value_count = 0;
-                break;
-            case '}':
-                putchar(*s);
-                key_value_count = 2;
-                break;
-            default:
-                if (key_value_count & 0x1) putchar(':');
-                else if (key_value_count > 1) putchar(',');
-                printf("\"%s\"", s);
-                t = 0;
-                key_value_count++;
-                break;
-            }
-            break;
-        }
-    }
-    putchar('}');
-}
-

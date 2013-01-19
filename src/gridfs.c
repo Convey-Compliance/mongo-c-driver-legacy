@@ -165,7 +165,7 @@ MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *pref
   bson_append_int(&b, "filename", 1);
   bson_finish(&b);
   options = 0;
-  success = (mongo_create_index(gfs->client, gfs->files_ns, &b, options, NULL) == MONGO_OK);
+  success = (mongo_create_index(gfs->client, gfs->files_ns, &b, NULL, options, NULL) == MONGO_OK);
   bson_destroy(&b);
   if (!success) {
     gridfs_freeFields( gfs );
@@ -177,7 +177,7 @@ MONGO_EXPORT int gridfs_init(mongo *client, const char *dbname, const char *pref
   bson_append_int(&b, "n", 1);
   bson_finish(&b);
   options = MONGO_INDEX_UNIQUE;
-  success = (mongo_create_index(gfs->client, gfs->chunks_ns, &b, options, NULL) == MONGO_OK);
+  success = (mongo_create_index(gfs->client, gfs->chunks_ns, &b, NULL, options, NULL) == MONGO_OK);
   bson_destroy(&b);
   if (!success) {
     gridfs_freeFields( gfs );    
@@ -1235,4 +1235,39 @@ MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newS
     gfile->pos = 0;
   }
   return gfile->length;
+}
+
+MONGO_EXPORT gridfs_offset gridfile_set_size(gridfile *gfile, gridfs_offset newSize)
+{
+  gridfs_offset fileSize;
+
+  check_mongo_object( gfile );
+  
+  if( newSize < 0 ) {
+    newSize = 0;
+  };
+  fileSize = gridfile_get_contentlength( gfile );
+  if( newSize <= fileSize ) {
+    return gridfile_truncate( gfile, newSize );
+  } else {        
+    gridfs_offset toWrite;
+    gridfs_offset curPos = fileSize;
+    int bufSize = gridfile_get_chunksize ( gfile );
+    void* buf = bson_malloc( bufSize );
+
+    memset( buf, 0, bufSize );
+    gridfile_seek( gfile, fileSize );
+
+    while( curPos < newSize ) {
+      toWrite = bufSize - curPos % bufSize;
+      if( toWrite + curPos > newSize ) {
+        toWrite = newSize - curPos;
+      }
+      gridfile_write_buffer( gfile, (const char*)buf, toWrite );
+      curPos += toWrite;
+    }
+
+    bson_free( buf );
+    return newSize;
+  }
 }
