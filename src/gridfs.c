@@ -1205,6 +1205,7 @@ static void gridfile_remove_chunks( gridfile *gfile, int deleteFromChunk){
 }
 
 MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newSize) {
+
   int deleteFromChunk;
 
   check_mongo_object( gfile );
@@ -1237,37 +1238,49 @@ MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newS
   return gfile->length;
 }
 
+MONGO_EXPORT gridfs_offset gridfile_expand(gridfile *gfile, gridfs_offset bytesToExpand){
+  gridfs_offset fileSize, newSize, curPos, toWrite, bufSize;  
+
+  void* buf;
+
+  check_mongo_object( gfile );  
+  
+  fileSize = gridfile_get_contentlength( gfile );
+  if( bytesToExpand < 0 ) {
+    gridfile_seek( gfile, fileSize );
+    return fileSize;
+  }
+  newSize = fileSize + bytesToExpand;
+  curPos = fileSize;
+  bufSize = gridfile_get_chunksize ( gfile );
+  buf = bson_malloc( (size_t)bufSize );
+  
+  memset( buf, 0, (size_t)bufSize );
+  gridfile_seek( gfile, fileSize );
+
+  while( curPos < newSize ) {
+    toWrite = bufSize - curPos % bufSize;
+    if( toWrite + curPos > newSize ) {
+      toWrite = newSize - curPos;
+    }
+    gridfile_write_buffer( gfile, (const char*)buf, toWrite );
+    curPos += toWrite;
+  }
+
+  bson_free( buf );
+  return newSize;
+}
+
 MONGO_EXPORT gridfs_offset gridfile_set_size(gridfile *gfile, gridfs_offset newSize)
 {
   gridfs_offset fileSize;
 
-  check_mongo_object( gfile );
+  check_mongo_object( gfile ); 
   
-  if( newSize < 0 ) {
-    newSize = 0;
-  };
   fileSize = gridfile_get_contentlength( gfile );
   if( newSize <= fileSize ) {
     return gridfile_truncate( gfile, newSize );
-  } else {        
-    gridfs_offset toWrite;
-    gridfs_offset curPos = fileSize;
-    int bufSize = gridfile_get_chunksize ( gfile );
-    void* buf = bson_malloc( bufSize );
-
-    memset( buf, 0, bufSize );
-    gridfile_seek( gfile, fileSize );
-
-    while( curPos < newSize ) {
-      toWrite = bufSize - curPos % bufSize;
-      if( toWrite + curPos > newSize ) {
-        toWrite = newSize - curPos;
-      }
-      gridfile_write_buffer( gfile, (const char*)buf, toWrite );
-      curPos += toWrite;
-    }
-
-    bson_free( buf );
-    return newSize;
+  } else {            
+    return gridfile_expand( gfile, newSize - fileSize );
   }
 }

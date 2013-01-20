@@ -406,6 +406,13 @@ MONGO_EXPORT gridfs_offset gridfile_truncate(gridfile *gfile, gridfs_offset newS
 
 /**
  *  @param gfile - the working GridFile
+ *  @param bytesToExpand - number of bytes the file will be expanded
+ *
+ */
+MONGO_EXPORT gridfs_offset gridfile_expand(gridfile *gfile, gridfs_offset bytesToExpand);
+
+/**
+ *  @param gfile - the working GridFile
  *  @param newSize - the new size of file
  *
  */
