@@ -65,8 +65,9 @@ typedef enum mongo_cursor_error_t {
     MONGO_CURSOR_PENDING,    /**< Tailable cursor still alive but no data. */
     MONGO_CURSOR_QUERY_FAIL, /**< The server returned an '$err' object, indicating query failure.
                                   See conn->lasterrcode and conn->lasterrstr for details. */
-    MONGO_CURSOR_BSON_ERROR  /**< Something is wrong with the BSON provided. See conn->err
+    MONGO_CURSOR_BSON_ERROR,  /**< Something is wrong with the BSON provided. See conn->err
                                   for details. */
+    MONGO_CURSOR_OVERFLOW    /**< the message to send is too long */
 } mongo_cursor_error_t;
 
 enum mongo_cursor_flags {
@@ -714,6 +715,44 @@ MONGO_EXPORT bson_bool_t mongo_create_simple_index( mongo *conn, const char *ns,
         const char *field, int options, bson *out );
 
 /**
+ * Create a cursor to iterate through all the indexes.
+ *
+ * @param conn a mongo object.
+ * @param ns the namespace.
+ * @param limit the maximum number of indexes to return.
+ *
+ * @return A cursor object allocated on the heap or NULL if
+ *     an error has occurred. For finer-grained error checking,
+ *     use the cursor builder API instead.
+ */
+mongo_cursor *mongo_index_list( mongo *conn, const char *ns, int skip, int limit );
+
+/**
+ * Get the number of indexes.
+ *
+ * @param conn a mongo object.
+ * @param ns the namespace.
+ *
+ * @return the number of indexes.
+ */
+MONGO_EXPORT double mongo_index_count( mongo *conn, const char *ns );
+
+/**
+ * Create a cursor to iterate through all the indexes.
+ *
+ * @param conn a mongo object.
+ * @param ns the namespace.
+ * @param index will be set with the list of indexes.
+ *
+ * @return returns 0 if there was no error.
+ */
+int mongo_drop_indexes( mongo *conn, const char *ns, bson *index );
+
+int mongo_reindex( mongo *conn, const char *ns );
+
+int mongo_map_reduce( mongo *conn, const char *ns, const char *map_function, const char *reduce_function, bson *query, bson *sort, int64_t limit, bson *out, int keeptemp, const char *finalize, bson *scope, int jsmode, int verbose, bson *output );
+
+/**
  * Run a command on a MongoDB server.
  *
  * @param conn a mongo object.
@@ -765,6 +804,41 @@ MONGO_EXPORT int mongo_simple_str_command( mongo *conn, const char *db,
  * @return MONGO_OK or an error code.
  */
 MONGO_EXPORT int mongo_cmd_drop_db( mongo *conn, const char *db );
+
+/**
+ * Create a collection.
+ *
+ * @param conn a mongo object.
+ * @param db the name of the database.
+ * @param collection the name of the collection to create.
+ *
+ * @return true if the collection drop was successful.
+ */
+MONGO_EXPORT int mongo_cmd_create_collection( mongo *conn, const char *db, const char *collection );
+
+/**
+ * Create a capped collection.
+ *
+ * @param conn a mongo object.
+ * @param db the name of the database.
+ * @param collection the name of the collection to drop.
+ * @param capsize cap size.
+ *
+ * @return true if the collection drop was successful.
+ */
+MONGO_EXPORT int mongo_cmd_create_capped_collection( mongo *conn, const char *db, const char *collection, int64_t capsize );
+
+/**
+ * Rename a collection.
+ *
+ * @param conn a mongo object.
+ * @param db the name of the database.
+ * @param oldcollection the old name of the collection.
+ * @param newcollection the new name of the collection.
+ *
+ * @return true if the collection drop was successful.
+ */
+MONGO_EXPORT int mongo_cmd_rename_collection( mongo *conn, const char *db, const char *oldcollection, const char *newcollection );
 
 /**
  * Drop a collection.
