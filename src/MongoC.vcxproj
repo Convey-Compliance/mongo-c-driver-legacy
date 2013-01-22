@@ -122,46 +122,46 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
-    <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -176,7 +176,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StructMemberAlignment>8Bytes</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>X:\Lib\MongoClient\src\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -198,7 +198,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StructMemberAlignment>8Bytes</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>X:\Lib\MongoClient\src\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -220,7 +220,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>X:\Lib\MongoClient\src\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -242,7 +242,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>X:\Lib\MongoClient\src\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
@@ -265,6 +265,7 @@
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -287,6 +288,7 @@
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -309,6 +311,7 @@
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -331,6 +334,7 @@
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>.\ZLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
