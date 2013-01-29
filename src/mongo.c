@@ -1016,7 +1016,7 @@ MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
     data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
     mongo_data_append( data, bson->data, bson_size( bson ) );
 
-    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );    
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );    
 }
 
 MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
@@ -1070,7 +1070,7 @@ MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
         data = mongo_data_append( data, bsons[i]->data, bson_size( bsons[i] ) );
     }
 
-    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
@@ -1115,7 +1115,7 @@ MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append( data, cond->data, bson_size( cond ) );
     mongo_data_append( data, op->data, bson_size( op ) );
 
-    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
@@ -1158,7 +1158,7 @@ MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append32( data, &ZERO );
     mongo_data_append( data, cond->data, bson_size( cond ) );
 
-    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 
@@ -1205,7 +1205,7 @@ MONGO_EXPORT int mongo_write_concern_finish( mongo_write_concern *write_concern 
 
     if( write_concern->mode ) {
         bson_append_string( command, "w", write_concern->mode );
-    } else if( write_concern->w ) {
+    } else if( write_concern->w && write_concern->w > 1 ) {
         bson_append_int( command, "w", write_concern->w );
     }
 
@@ -1250,6 +1250,9 @@ MONGO_EXPORT void mongo_set_write_concern( mongo *conn,
         mongo_write_concern *write_concern ) {
         
     check_mongo_object(conn); 
+    if( write_concern ) {
+      check_mongo_object(write_concern);
+    };
     conn->write_concern = write_concern;
 }
 
