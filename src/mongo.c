@@ -736,7 +736,7 @@ MONGO_EXPORT int mongo_replica_set_client( mongo *conn ) {
 
                 /* Primary found, so return. */
                 else if( conn->replica_set->primary_connected ) {
-                    conn->primary = bson_malloc( sizeof( mongo_host_port ) );
+                    conn->primary = (mongo_host_port*)bson_malloc( sizeof( mongo_host_port ) );
                     strncpy( conn->primary->host, node->host, strlen( node->host ) + 1 );
                     conn->primary->port = node->port;
                     return MONGO_OK;
@@ -965,6 +965,18 @@ static int mongo_choose_write_concern( mongo *conn,
 /*********************************************************************
 CRUD API
 **********************************************************************/
+static int mongo_message_send_and_check_write_concern( mongo *conn, const char *ns, mongo_message *mm, mongo_write_concern *write_concern ) {
+   if( write_concern ) {
+        if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
+            return MONGO_ERROR;
+        }
+
+        return mongo_check_last_error( conn, ns, write_concern );
+    }
+    else {
+        return mongo_message_send( conn, mm );
+    }
+};
 
 MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
                                const bson *bson, mongo_write_concern *custom_write_concern ) {
@@ -1004,19 +1016,7 @@ MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
     data = mongo_data_append( data, ns, (int)strlen( ns ) + 1 );
     mongo_data_append( data, bson->data, bson_size( bson ) );
 
-
-    /* TODO: refactor so that we can send the insert message
-       and the getlasterror messages together. */
-    if( write_concern ) {
-        if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
-            return MONGO_ERROR;
-        }
-
-        return mongo_check_last_error( conn, ns, write_concern );
-    }
-    else {
-        return mongo_message_send( conn, mm );
-    }
+    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );    
 }
 
 MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
@@ -1070,18 +1070,7 @@ MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
         data = mongo_data_append( data, bsons[i]->data, bson_size( bsons[i] ) );
     }
 
-    /* TODO: refactor so that we can send the insert message
-     * and the getlasterror messages together. */
-    if( write_concern ) {
-        if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
-            return MONGO_ERROR;
-        }
-
-        return mongo_check_last_error( conn, ns, write_concern );
-    }
-    else {
-        return mongo_message_send( conn, mm );
-    }
+    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
@@ -1126,18 +1115,7 @@ MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append( data, cond->data, bson_size( cond ) );
     mongo_data_append( data, op->data, bson_size( op ) );
 
-    /* TODO: refactor so that we can send the insert message
-     * and the getlasterror messages together. */
-    if( write_concern ) {
-        if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
-            return MONGO_ERROR;
-        }
-
-        return mongo_check_last_error( conn, ns, write_concern );
-    }
-    else {
-        return mongo_message_send( conn, mm );
-    }
+    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
@@ -1180,24 +1158,25 @@ MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append32( data, &ZERO );
     mongo_data_append( data, cond->data, bson_size( cond ) );
 
-    /* TODO: refactor so that we can send the insert message
-     * and the getlasterror messages together. */
-    if( write_concern ) {
-        if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
-            return MONGO_ERROR;
-        }
-
-        return mongo_check_last_error( conn, ns, write_concern );
-    }
-    else {
-        return mongo_message_send( conn, mm );
-    }
+    mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
 }
 
 
 /*********************************************************************
 Write Concern API
 **********************************************************************/
+
+MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( ) {
+    mongo_write_concern* wc = (mongo_write_concern*)bson_malloc( sizeof( mongo_write_concern ) );
+    mongo_write_concern_init( wc );
+    return wc;
+};
+
+MONGO_EXPORT void mongo_write_concern_free( mongo_write_concern* write_concern ) {
+    check_destroyed_mongo_object( write_concern );
+    ASSIGN_SIGNATURE(write_concern, 0);
+    bson_free( write_concern );
+};
 
 MONGO_EXPORT void mongo_write_concern_init( mongo_write_concern *write_concern ) {
     memset( write_concern, 0, sizeof( mongo_write_concern ) );
@@ -1208,7 +1187,7 @@ MONGO_EXPORT int mongo_write_concern_finish( mongo_write_concern *write_concern 
     bson *command;
 
     check_mongo_object( write_concern );
-    /* Destory any existing serialized write concern object and reuse it. */
+    /* Destroy any existing serialized write concern object and reuse it. */
     if( write_concern->cmd ) {
         bson_destroy( write_concern->cmd );
         command = write_concern->cmd;
@@ -1226,9 +1205,7 @@ MONGO_EXPORT int mongo_write_concern_finish( mongo_write_concern *write_concern 
 
     if( write_concern->mode ) {
         bson_append_string( command, "w", write_concern->mode );
-    }
-
-    else if( write_concern->w && write_concern->w > 1 ) {
+    } else if( write_concern->w ) {
         bson_append_int( command, "w", write_concern->w );
     }
 
@@ -1266,7 +1243,7 @@ MONGO_EXPORT void mongo_write_concern_destroy( mongo_write_concern *write_concer
       bson_free( write_concern->cmd );
       write_concern->cmd = NULL;
     }
-    ASSIGN_SIGNATURE(write_concern, 0);
+    ASSIGN_SIGNATURE(write_concern, MONGO_SIGNATURE_READY_TO_DISPOSE);
 }
 
 MONGO_EXPORT void mongo_set_write_concern( mongo *conn,
@@ -1276,11 +1253,62 @@ MONGO_EXPORT void mongo_set_write_concern( mongo *conn,
     conn->write_concern = write_concern;
 }
 
-/**
- * Free the write_concern object (specifically, the BSON object that it holds).
- */
-MONGO_EXPORT void mongo_write_concern_destroy( mongo_write_concern *write_concern );
+MONGO_EXPORT int mongo_write_concern_get_w( mongo_write_concern *write_concern ){
+    check_mongo_object( write_concern ); 
+    return write_concern->w;
+};
 
+MONGO_EXPORT int mongo_write_concern_get_wtimeout( mongo_write_concern *write_concern ){
+    check_mongo_object( write_concern ); 
+    return write_concern->wtimeout;
+};
+
+MONGO_EXPORT int mongo_write_concern_get_j( mongo_write_concern *write_concern ){
+    check_mongo_object( write_concern ); 
+    return write_concern->j;
+};
+
+MONGO_EXPORT int mongo_write_concern_get_fsync( mongo_write_concern *write_concern ){    
+    check_mongo_object( write_concern ); 
+    return write_concern->fsync;
+};
+
+MONGO_EXPORT const char* mongo_write_concern_get_mode( mongo_write_concern *write_concern ){
+    check_mongo_object( write_concern ); 
+    return write_concern->mode;
+};
+
+MONGO_EXPORT bson* mongo_write_concern_get_cmd( mongo_write_concern *write_concern ){
+    check_mongo_object( write_concern ); 
+    return write_concern->cmd;
+};
+
+MONGO_EXPORT void mongo_write_concern_set_w( mongo_write_concern *write_concern, int w ){
+    check_mongo_object( write_concern ); 
+    write_concern->w = w;
+};
+
+MONGO_EXPORT void mongo_write_concern_set_wtimeout( mongo_write_concern *write_concern, int wtimeout ){
+    check_mongo_object( write_concern ); 
+    write_concern->wtimeout = wtimeout;
+
+};
+
+MONGO_EXPORT void mongo_write_concern_set_j( mongo_write_concern *write_concern, int j ){
+    check_mongo_object( write_concern ); 
+    write_concern->j = j;
+};
+
+MONGO_EXPORT void mongo_write_concern_set_fsync( mongo_write_concern *write_concern, int fsync ){
+    check_mongo_object( write_concern ); 
+    write_concern->fsync = fsync;
+
+};
+
+MONGO_EXPORT void mongo_write_concern_set_mode( mongo_write_concern *write_concern, const char* mode ){
+    check_mongo_object( write_concern ); 
+    write_concern->mode = mode;
+};
 
 static int mongo_cursor_op_query( mongo_cursor *cursor ) {
     int res;

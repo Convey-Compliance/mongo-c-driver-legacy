@@ -498,6 +498,18 @@ Write Concern API
 **********************************************************************/
 
 /**
+ * Allocates memory for a mongo_write_concern object and calls mongo_write_concern_init on it
+ *
+ */
+MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( );
+
+/**
+ * Frees memory allocated for a mongo_write_concern object. User still must call mongo_write_concern_destroy before hand!
+ *
+ */
+MONGO_EXPORT void mongo_write_concern_free( mongo_write_concern* write_concern );
+
+/**
  * Initialize a mongo_write_concern object. Effectively zeroes out the struct.
  *
  */
@@ -517,6 +529,27 @@ MONGO_EXPORT int mongo_write_concern_finish( mongo_write_concern *write_concern 
  *
  */
 MONGO_EXPORT void mongo_write_concern_destroy( mongo_write_concern *write_concern );
+
+/**
+ * The following functions get the attributes of the write_concern object.
+ *
+ */
+MONGO_EXPORT int mongo_write_concern_get_w( mongo_write_concern *write_concern );
+MONGO_EXPORT int mongo_write_concern_get_wtimeout( mongo_write_concern *write_concern );
+MONGO_EXPORT int mongo_write_concern_get_j( mongo_write_concern *write_concern );
+MONGO_EXPORT int mongo_write_concern_get_fsync( mongo_write_concern *write_concern );
+MONGO_EXPORT const char* mongo_write_concern_get_mode( mongo_write_concern *write_concern );
+MONGO_EXPORT bson* mongo_write_concern_get_cmd( mongo_write_concern *write_concern );
+
+/**
+ * The following functions set the attributes of the write_concern object.
+ *
+ */
+MONGO_EXPORT void mongo_write_concern_set_w( mongo_write_concern *write_concern, int w );
+MONGO_EXPORT void mongo_write_concern_set_wtimeout( mongo_write_concern *write_concern, int wtimeout );
+MONGO_EXPORT void mongo_write_concern_set_j( mongo_write_concern *write_concern, int j );
+MONGO_EXPORT void mongo_write_concern_set_fsync( mongo_write_concern *write_concern, int fsync );
+MONGO_EXPORT void mongo_write_concern_set_mode( mongo_write_concern *write_concern, const char* mode );
 
 /*********************************************************************
 Cursor API
