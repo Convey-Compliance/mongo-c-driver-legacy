@@ -15,6 +15,10 @@
  *    limitations under the License.
  */
 
+#if _MSC_VER && ! _CRT_SECURE_NO_WARNINGS   
+  #define _CRT_SECURE_NO_WARNINGS  
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -53,15 +57,15 @@ static int ( *oid_inc_func )( void )  = NULL;
    ------------------------------ */
 
 MONGO_EXPORT bson* bson_create( void ) {
-  bson *b = (bson*)bson_malloc(sizeof(bson));
-  b->data = NULL;
-  ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
+    bson *b = (bson*)bson_malloc(sizeof(bson));
+    b->data = NULL;
+    ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
 	return b;
 }
 
 MONGO_EXPORT void bson_dispose(bson* b) {
-  check_destroyed_mongo_object( b );
-  ASSIGN_SIGNATURE(b, 0);
+    check_destroyed_mongo_object( b );
+    ASSIGN_SIGNATURE(b, 0);
 	bson_free(b);
 }
 
@@ -171,7 +175,7 @@ MONGO_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
     static int incr = 0;
     static int fuzz = 0;
     int i;
-    int t = (int)time( NULL );
+    time_t t = time( NULL );
 
     if( oid_inc_func )
         i = oid_inc_func();
@@ -182,7 +186,7 @@ MONGO_EXPORT void bson_oid_gen( bson_oid_t *oid ) {
         if ( oid_fuzz_func )
             fuzz = oid_fuzz_func();
         else {
-            srand( t );
+            srand( ( int )t );
             fuzz = rand();
         }
     }
@@ -722,7 +726,7 @@ int bson_ensure_space( bson *b, const size_t bytesNeeded ) {
 }
 
 MONGO_EXPORT int bson_finish( bson *b ) {
-    size_t i;
+    int i;
 
     check_mongo_object( (void*)b );
 
@@ -1043,6 +1047,8 @@ MONGO_EXPORT int bson_append_finish_object( bson *b ) {
     char *start;
     int i;
     check_mongo_object( (void*)b );  
+    if (!b) return BSON_ERROR;
+    if (!b->stackPos) { b->err = BSON_NOT_IN_SUBOBJECT; return BSON_ERROR; }
     if ( bson_ensure_space( b, 1 ) == BSON_ERROR ) return BSON_ERROR;
     bson_append_byte( b , 0 );
 
