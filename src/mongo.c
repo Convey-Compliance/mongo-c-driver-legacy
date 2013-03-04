@@ -490,7 +490,7 @@ static char WC1_data[] = {23,0,0,0,16,103,101,116,108,97,115,116,101,114,114,111
   static mongo_write_concern WC1 = { MONGO_SIGNATURE, 1, 0, 0, 0, 0, &WC1_cmd }; /* w = 1 */
 #else
 static bson WC1_cmd = {
-    WC1_data, WC1_data, 128, 1, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0, ""
+    WC1_data, WC1_data, 128, 1, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0, "", 0, 0
 };
 static mongo_write_concern WC1 = { 1, 0, 0, 0, 0, &WC1_cmd }; /* w = 1 */
 #endif
