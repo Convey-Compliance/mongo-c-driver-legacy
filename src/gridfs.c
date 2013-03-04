@@ -15,6 +15,11 @@
  *    limitations under the License.
  */
 
+	
+#if _MSC_VER && ! _CRT_SECURE_NO_WARNINGS   
+  #define _CRT_SECURE_NO_WARNINGS  
+#endif
+
 #include "gridfs.h"
 #include <stdio.h>
 #include <stdlib.h>

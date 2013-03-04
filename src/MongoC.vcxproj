@@ -355,7 +355,6 @@
     <ClInclude Include="gridfs.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="mongo.h" />
-    <ClInclude Include="net.h" />
     <ClInclude Include="platform.h" />
     <ClInclude Include="prepostChunkProcessing.h" />
     <ClInclude Include="resource.h" />
@@ -400,12 +399,6 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">CompileAsC</CompileAs>
     </ClCompile>
     <ClCompile Include="mongo.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="net.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
