@@ -327,7 +327,7 @@ static mongo_message *mongo_message_create( size_t len , int id , int responseTo
     mm->head.id = id;
     mm->head.responseTo = responseTo;
     mm->head.op = op;
-    
+
     return mm;
 }
 
@@ -388,8 +388,10 @@ static int mongo_read_response( mongo *conn, mongo_reply **reply ) {
     int res;
 
     check_mongo_object(conn);
-    mongo_env_read_socket( conn, &head, sizeof( head ) );
-    mongo_env_read_socket( conn, &fields, sizeof( fields ) );
+    if ( ( res = mongo_env_read_socket( conn, &head, sizeof( head ) ) ) != MONGO_OK ||
+         ( res = mongo_env_read_socket( conn, &fields, sizeof( fields ) ) ) != MONGO_OK ) {
+        return res;
+    }
 
     bson_little_endian32( &len, &head.len );
 
@@ -1720,156 +1722,6 @@ MONGO_EXPORT bson_bool_t mongo_create_simple_index( mongo *conn, const char *ns,
     return success;
 }
 
-mongo_cursor *mongo_index_list( mongo *conn, const char *ns, int skip, int limit ) {
-    bson query;
-    mongo_cursor *cursor;
-    size_t index_collection_name_size;
-    char *index_collection_name;
-    size_t ii = 0;
-    
-    index_collection_name_size = strlen( ns ) + strlen( ".system.indexes" ) + 1;
-    index_collection_name = (char*)bson_malloc( index_collection_name_size );
-    while (ns[ii] != '.' && ns[ii] != 0) {
-        index_collection_name[ii] = ns[ii];
-        ii++;
-    }
-    _snprintf( index_collection_name + ii, index_collection_name_size - ii, ".system.indexes" );
-    
-    bson_init(&query);
-    bson_append_start_object( &query, "$query" );
-    bson_append_string( &query, "ns", ns );
-    bson_append_finish_object( &query );
-    bson_finish(&query);
-    
-    cursor = ( mongo_cursor * )bson_malloc( sizeof( mongo_cursor ) );
-    mongo_cursor_init( cursor, conn, index_collection_name );
-    mongo_cursor_set_skip( cursor, skip );
-    mongo_cursor_set_limit( cursor, limit );
-    mongo_cursor_set_query( cursor, &query );
-    cursor->flags |= MONGO_CURSOR_MUST_FREE;
-    
-    
-    if( mongo_cursor_op_query( cursor ) != MONGO_OK ) {
-        mongo_cursor_destroy( cursor );
-        cursor = NULL;
-    }
-    bson_free( index_collection_name );
-    bson_destroy( &query );
-    return cursor;
-}
-
-MONGO_EXPORT double mongo_index_count( mongo *conn, const char *ns ) {
-    bson query;
-    const char *database_name;
-    double result;
-    
-    database_name = create_database_name_with_ns( ns, NULL );
-    
-    bson_init( &query );
-    bson_append_string( &query, "ns", ns );
-    bson_finish( &query );
-    
-    result = mongo_count( conn, database_name, "system.indexes", &query );
-    
-    bson_free( ( void * )database_name );
-    bson_destroy( &query );
-    return result;
-}
-
-int mongo_drop_indexes( mongo *conn, const char *ns, bson *index )
-{
-    bson cmd;
-    bson out = INIT_BSON;
-    const char *database_name;
-    const char *collection_name;
-    int result;
-    
-    database_name = create_database_name_with_ns( ns, &collection_name );
-    
-    bson_init( &cmd );
-    bson_append_string( &cmd, "dropIndexes", collection_name );
-    bson_append_bson( &cmd, "index", index );
-    bson_finish( &cmd );
-    
-    result = ( mongo_run_command( conn, database_name, &cmd, &out ) == MONGO_OK )?MONGO_OK:MONGO_ERROR;
-    
-    free( ( void * )database_name );
-    bson_destroy( &cmd );
-    bson_destroy( &out );
-    
-    return result;
-}
-
-int mongo_reindex( mongo *conn, const char *ns )
-{
-    bson cmd;
-    bson out = INIT_BSON;
-    const char *database_name;
-    const char *collection_name;
-    int result;
-    
-    database_name = create_database_name_with_ns( ns, &collection_name );
-    
-    bson_init( &cmd );
-    bson_append_string( &cmd, "reIndex", collection_name );
-    bson_finish( &cmd );
-    
-    result = ( mongo_run_command( conn, database_name, &cmd, &out ) == MONGO_OK )?MONGO_OK:MONGO_ERROR;
-    
-    free( ( void * )database_name );
-    bson_destroy( &cmd );
-    bson_destroy( &out );
-    
-    return result;
-}
-
-int mongo_map_reduce( mongo *conn, const char *ns, const char *map_function, const char *reduce_function, bson *query, bson *sort, int64_t limit, bson *out, int keeptemp, const char *finalize, bson *scope, int jsmode, int verbose, bson *output )
-{
-    bson cmd;
-    const char *database_name;
-    const char *collection_name;
-    int result;
-    
-    database_name = create_database_name_with_ns( ns, &collection_name );
-    
-    bson_init( &cmd );
-    bson_append_string( &cmd, "mapreduce", collection_name );
-    bson_append_string( &cmd, "map", map_function );
-    bson_append_string( &cmd, "reduce", reduce_function );
-    if ( query ) {
-        bson_append_bson( &cmd, "query", query );
-    }
-    if ( sort ) {
-        bson_append_bson( &cmd, "sort", sort );
-    }
-    if ( limit > 0 ) {
-        bson_append_long( &cmd, "limit", limit );
-    }
-    if ( out ) {
-        bson_iterator iterator;
-        
-        bson_find( &iterator, out, "out" );
-        bson_append_element(&cmd, "out", &iterator);
-    }
-    bson_append_bool( &cmd, "keeptemp", keeptemp );
-    if ( finalize ) {
-        bson_append_string( &cmd, "finalize", finalize );
-    }
-    if ( scope ) {
-        bson_append_bson( &cmd, "scope", scope );
-    }
-    bson_append_bool( &cmd, "jsMode", jsmode );
-    bson_append_bool( &cmd, "verbose", verbose );
-    bson_finish( &cmd );
-    
-    result = ( mongo_run_command( conn, database_name, &cmd, output ) == MONGO_OK )?MONGO_OK:MONGO_ERROR;
-    
-    free( ( void * )database_name );
-    bson_destroy( &cmd );
-    
-    return result;
-}
-
 MONGO_EXPORT int mongo_create_capped_collection( mongo *conn, const char *db,
         const char *collection, int size, int max, bson *out ) {
 
@@ -2032,61 +1884,6 @@ MONGO_EXPORT int mongo_cmd_drop_db( mongo *conn, const char *db ) {
 MONGO_EXPORT int mongo_cmd_drop_collection( mongo *conn, const char *db, const char *collection, bson *out ) {
     check_mongo_object(conn);
     return mongo_simple_str_command( conn, db, "drop", collection, out );
-}
-
-MONGO_EXPORT int mongo_cmd_create_collection( mongo *conn, const char *db, const char *collection ) {
-    return mongo_simple_str_command( conn, db, "create", collection, NULL );
-}
-
-MONGO_EXPORT int mongo_cmd_create_capped_collection( mongo *conn, const char *db, const char *collection, int64_t capsize ) {
-
-    bson out = INIT_BSON;
-    int result;
-    
-    bson cmd;
-    bson_init( &cmd );
-    bson_append_string( &cmd, "create", collection );
-    bson_append_bool( &cmd, "capped", 1 );
-    bson_append_long( &cmd, "size", capsize );
-    bson_finish( &cmd );
-    
-    result = mongo_run_command( conn, db, &cmd, &out );
-    
-    bson_destroy( &cmd );
-    bson_destroy( &out );
-    
-    return result;
-}
-
-MONGO_EXPORT int mongo_cmd_rename_collection( mongo *conn, const char *db, const char *oldcollection, const char *newcollection )
-{
-    
-    bson out = INIT_BSON;
-    int result;
-    size_t new_nsname_size, old_nsname_size;
-    char *new_nsname;
-    char *old_nsname;
-    bson cmd;
-    
-    old_nsname_size = strlen(db) + 1 + strlen(oldcollection);
-    old_nsname = (char*)malloc(old_nsname_size);
-    _snprintf(old_nsname, old_nsname_size, "%s.%s", db, oldcollection);
-    new_nsname_size = strlen(db) + 1 + strlen(newcollection);
-    new_nsname = (char*)malloc(new_nsname_size);
-    _snprintf(new_nsname, new_nsname_size, "%s.%s", db, newcollection);    
-    bson_init( &cmd );
-    bson_append_string( &cmd, "rename", old_nsname );
-    bson_append_string( &cmd, "to", new_nsname );
-    bson_finish( &cmd );
-    
-    result = mongo_run_command( conn, db, &cmd, &out );
-    
-    bson_destroy( &cmd );
-    bson_destroy( &out );
-    free(old_nsname);
-    free(new_nsname);
-    
-    return result;
 }
 
 MONGO_EXPORT void mongo_cmd_reset_error( mongo *conn, const char *db ) {
