@@ -194,6 +194,7 @@ void test_streaming( void ) {
     fill_buffer_randomly( buf, ( int64_t )LARGE );
 
     gridfs_init( conn, "test", "fs", gfs );
+    gridfile_init( gfs, NULL, gfile );
     gridfile_writer_init( gfile, gfs, "medium", "text/html", GRIDFILE_DEFAULT );
 
     gridfile_write_buffer( gfile, medium, MEDIUM );
@@ -238,7 +239,7 @@ void test_random_write() {
 
     INIT_SOCKETS_FOR_WINDOWS;
 
-    if ( mongo_connect( conn, TEST_SERVER, 27017 ) ) {
+    if ( mongo_client( conn, TEST_SERVER, 27017 ) ) {
         printf( "failed to connect 2\n" );
         exit( 1 );
     }
