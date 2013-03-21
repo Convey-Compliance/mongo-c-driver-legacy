@@ -3,7 +3,7 @@
 /*    Copyright 2009-2012 10gen Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
+ *    you may not use this file except in compliance with the License. 
  *    You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
@@ -515,7 +515,11 @@ MONGO_EXPORT int gridfile_init(gridfs *gfs, bson *meta, gridfile *gfile){
   gfile->meta = (bson*)bson_malloc(sizeof(bson));
   if (gfile->meta == NULL) {
     return MONGO_ERROR;
-  } bson_copy(gfile->meta, meta);
+  } if( meta ) { 
+    bson_copy(gfile->meta, meta);
+  } else {
+    bson_empty(gfile->meta);
+  }
   gridfile_init_chunkSize( gfile );
   gridfile_init_length( gfile );
   gridfile_init_flags( gfile );
@@ -679,7 +683,8 @@ MONGO_EXPORT bson_oid_t *gridfile_get_id(gridfile *gfile) {
 
 MONGO_EXPORT bson_bool_t gridfile_exists(gridfile *gfile) {
   check_mongo_object( gfile );
-  return (bson_bool_t)(gfile != NULL || gfile->meta == NULL);
+  /* File exists if gfile and gfile->meta BOTH are != NULL */
+  return (bson_bool_t)(gfile != NULL && gfile->meta != NULL);
 }
 
 MONGO_EXPORT const char *gridfile_get_filename(gridfile *gfile) {
@@ -821,7 +826,7 @@ MONGO_EXPORT int gridfile_get_numchunks(gridfile *gfile) {
   } else {
     length = (gridfs_offset)bson_iterator_long(&it);
   } 
-
+ 
   bson_find(&it, gfile->meta, "chunkSize");
   chunkSize = bson_iterator_int(&it);
   numchunks = ((double)length / (double)chunkSize);
@@ -847,11 +852,11 @@ static void gridfile_flush_pendingchunk(gridfile *gfile) {
     gridfile_prepare_chunk_key_bson( &q, &gfile->id, gfile->chunk_num );    
     mongo_update(gfile->gfs->client, gfile->gfs->chunks_ns, &q, oChunk, MONGO_UPDATE_UPSERT, NULL);
     bson_destroy(&q);
-    chunk_free(oChunk);
-    gfile->chunk_num++;
-    if (gfile->pos > gfile->length) {
-      gfile->length = gfile->pos;
+    chunk_free(oChunk);    
+    if((gfile->chunk_num * gfile->chunkSize) + gfile->pending_len > gfile->length) {
+      gfile->length = (gfile->chunk_num * gfile->chunkSize) + gfile->pending_len;
     }
+    gfile->chunk_num++;
     gfile->pending_len = 0;
   }
   if( targetBuf && targetBuf != gfile->pending_data ) {
@@ -948,10 +953,13 @@ MONGO_EXPORT void gridfile_write_buffer(gridfile *gfile, const char *data, gridf
   /* Finally, if there's still remaining bytes left to write, we will preload the current chunk and merge the 
      remaining bytes into pending_data buffer */
   if ( bytes_left > 0 ) {
-    if( gfile->pos + bytes_left < gfile->length ) {
-      gridfile_load_pending_data_with_pos_chunk(gfile);
+    /* Let's preload the chunk we are writing IF the current chunk is not already in memory
+       AND if after writing the remaining buffer there's should be trailing data that we don't
+       want to loose */ 
+    if( !gfile->pending_len && gfile->pos + bytes_left < gfile->length ) {
+      gridfile_load_pending_data_with_pos_chunk( gfile );
     }
-    memcpy(gfile->pending_data, data, (size_t) bytes_left);
+    memcpy( gfile->pending_data, data, (size_t) bytes_left );
     if(  bytes_left > gfile->pending_len ) {
       gfile->pending_len = (int) bytes_left;
     }

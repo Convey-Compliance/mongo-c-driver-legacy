@@ -121,6 +121,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Run\$(Configuration)$(Platform)\</OutDir>
     <IntDir>..\BuildFiles\$(Configuration)$(Platform)\</IntDir>
+    <IncludePath>$(SolutionDir)..\Src;$(SolutionDir)..\Src\Zlib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -316,7 +317,6 @@
     <ClCompile Include="..\src\gridfs.c" />
     <ClCompile Include="..\src\md5.c" />
     <ClCompile Include="..\src\mongo.c" />
-    <ClCompile Include="..\src\net.c" />
     <ClCompile Include="..\src\numbers.c" />
     <ClCompile Include="..\src\prepostChunkProcessing.c" />
     <ClCompile Include="..\src\ZLib\adler32.c" />

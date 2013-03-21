@@ -92,9 +92,6 @@
     <ClCompile Include="..\src\mongo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\net.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\numbers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
