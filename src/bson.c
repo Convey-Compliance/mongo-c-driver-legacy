@@ -74,7 +74,8 @@ static int ( *oid_inc_func )( void )  = NULL;
 
 MONGO_EXPORT bson* bson_create( void ) {
     bson *b = (bson*)bson_malloc(sizeof(bson));
-    _bson_zero( b );    
+    b->ownsData = 0;
+    b->stackPtr = NULL;   
     ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
 	return b;
 }
