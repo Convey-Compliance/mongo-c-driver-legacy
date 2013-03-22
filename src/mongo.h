@@ -145,9 +145,6 @@ typedef struct mongo_host_port {
 } mongo_host_port;
 
 typedef struct mongo_write_concern {
-#ifdef MONGO_MEMORY_PROTECTION
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     int w;            /**< Number of total replica write copies to complete including the primary. */
     int wtimeout;     /**< Number of milliseconds before replication timeout. */
     int j;            /**< If non-zero, block until the journal sync. */
@@ -165,9 +162,6 @@ typedef struct {
 } mongo_replica_set;
 
 typedef struct mongo {
-#ifdef MONGO_MEMORY_PROTECTION
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     mongo_host_port *primary;  /**< Primary connection info. */
     mongo_replica_set *replica_set;    /**< replica_set object if connected to a replica set. */
     size_t sock;                  /**< Socket file descriptor. */
@@ -186,9 +180,6 @@ typedef struct mongo {
 } mongo;
 
 typedef struct {
-#ifdef MONGO_MEMORY_PROTECTION
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     mongo_reply *reply;  /**< reply is owned by cursor */
     mongo *conn;       /**< connection is *not* owned by cursor */
     const char *ns;    /**< owned by cursor */
@@ -203,11 +194,7 @@ typedef struct {
     int skip;          /**< Bitfield containing cursor options. */
 } mongo_cursor;
 
-#ifdef MONGO_MEMORY_PROTECTION
-  #define INIT_MONGO_CURSOR {MONGO_SIGNATURE}
-#else
-  #define INIT_MONGO_CURSOR {NULL}
-#endif
+#define INIT_MONGO_CURSOR {NULL}
 
 /*********************************************************************
 Connection API
@@ -256,7 +243,7 @@ MONGO_EXPORT int mongo_connect( mongo *conn , const char *host, int port );
 
 /**
  * Set up this connection object for connecting to a replica set.
- * To connect, pass the object to mongo_replica_set_connect().
+ * To connect, pass the object to mongo_replica_set_client().
  *
  * @param conn a mongo object.
  * @param name the name of the replica set to connect to.
@@ -498,18 +485,6 @@ Write Concern API
 **********************************************************************/
 
 /**
- * Allocates memory for a mongo_write_concern object and calls mongo_write_concern_init on it
- *
- */
-MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( );
-
-/**
- * Frees memory allocated for a mongo_write_concern object. User still must call mongo_write_concern_destroy before hand!
- *
- */
-MONGO_EXPORT void mongo_write_concern_free( mongo_write_concern* write_concern );
-
-/**
  * Initialize a mongo_write_concern object. Effectively zeroes out the struct.
  *
  */
@@ -748,44 +723,6 @@ MONGO_EXPORT bson_bool_t mongo_create_simple_index( mongo *conn, const char *ns,
         const char *field, int options, bson *out );
 
 /**
- * Create a cursor to iterate through all the indexes.
- *
- * @param conn a mongo object.
- * @param ns the namespace.
- * @param limit the maximum number of indexes to return.
- *
- * @return A cursor object allocated on the heap or NULL if
- *     an error has occurred. For finer-grained error checking,
- *     use the cursor builder API instead.
- */
-mongo_cursor *mongo_index_list( mongo *conn, const char *ns, int skip, int limit );
-
-/**
- * Get the number of indexes.
- *
- * @param conn a mongo object.
- * @param ns the namespace.
- *
- * @return the number of indexes.
- */
-MONGO_EXPORT double mongo_index_count( mongo *conn, const char *ns );
-
-/**
- * Create a cursor to iterate through all the indexes.
- *
- * @param conn a mongo object.
- * @param ns the namespace.
- * @param index will be set with the list of indexes.
- *
- * @return returns 0 if there was no error.
- */
-int mongo_drop_indexes( mongo *conn, const char *ns, bson *index );
-
-int mongo_reindex( mongo *conn, const char *ns );
-
-int mongo_map_reduce( mongo *conn, const char *ns, const char *map_function, const char *reduce_function, bson *query, bson *sort, int64_t limit, bson *out, int keeptemp, const char *finalize, bson *scope, int jsmode, int verbose, bson *output );
-
-/**
  * Run a command on a MongoDB server.
  *
  * @param conn a mongo object.
@@ -837,41 +774,6 @@ MONGO_EXPORT int mongo_simple_str_command( mongo *conn, const char *db,
  * @return MONGO_OK or an error code.
  */
 MONGO_EXPORT int mongo_cmd_drop_db( mongo *conn, const char *db );
-
-/**
- * Create a collection.
- *
- * @param conn a mongo object.
- * @param db the name of the database.
- * @param collection the name of the collection to create.
- *
- * @return true if the collection drop was successful.
- */
-MONGO_EXPORT int mongo_cmd_create_collection( mongo *conn, const char *db, const char *collection );
-
-/**
- * Create a capped collection.
- *
- * @param conn a mongo object.
- * @param db the name of the database.
- * @param collection the name of the collection to drop.
- * @param capsize cap size.
- *
- * @return true if the collection drop was successful.
- */
-MONGO_EXPORT int mongo_cmd_create_capped_collection( mongo *conn, const char *db, const char *collection, int64_t capsize );
-
-/**
- * Rename a collection.
- *
- * @param conn a mongo object.
- * @param db the name of the database.
- * @param oldcollection the old name of the collection.
- * @param newcollection the new name of the collection.
- *
- * @return true if the collection drop was successful.
- */
-MONGO_EXPORT int mongo_cmd_rename_collection( mongo *conn, const char *db, const char *oldcollection, const char *newcollection );
 
 /**
  * Drop a collection.
@@ -968,8 +870,10 @@ MONGO_EXPORT int mongo_get_op_timeout(mongo* conn);
 MONGO_EXPORT const char* mongo_get_primary(mongo* conn); /* Memory returned by this function must be freed */
 MONGO_EXPORT size_t mongo_get_socket(mongo* conn) ;
 MONGO_EXPORT int mongo_get_host_count(mongo* conn);
-MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i); /* Memory returned by this function must be freed */
-MONGO_EXPORT mongo_cursor* mongo_cursor_create();
+MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i);
+MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( void );
+MONGO_EXPORT void mongo_write_concern_dispose(mongo_write_concern* write_concern);
+MONGO_EXPORT mongo_cursor* mongo_cursor_create( void );
 MONGO_EXPORT void mongo_cursor_dispose(mongo_cursor* cursor);
 MONGO_EXPORT int  mongo_get_server_err(mongo* conn);
 MONGO_EXPORT const char*  mongo_get_server_err_string(mongo* conn);

@@ -2,7 +2,6 @@
 #include "md5.h"
 #include "mongo.h"
 #include "gridfs.h"
-#include "prepostChunkProcessing.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -11,12 +10,14 @@
 #include <unistd.h>
 #endif
 
-#define LARGE 5*1024*1024
+#define LARGE 3*1024*1024
 #define UPPER 2000*1024
 #define MEDIUM 1024*512
 #define LOWER 1024*128
 #define DELTA 1024*128
 #define READ_WRITE_BUF_SIZE 10 * 1024
+
+#define GRIDFILE_COMPRESS 2
 
 void fill_buffer_randomly( char *data, int64_t length ) {
     int64_t i;
@@ -327,7 +328,7 @@ void test_random_write2( void ) {
     fill_buffer_randomly( buf, ( int64_t )LARGE );
     memset( zeroedbuf, 0, LARGE ); 
 
-    bson_empty( &meta );
+    bson_init_empty( &meta );
 
     gridfs_init( conn, "test", "fs", gfs );
 
@@ -486,8 +487,6 @@ int main( void ) {
 /* See https://jira.mongodb.org/browse/CDRIVER-126
  * on why we exclude this test from running on WIN32 */
  
-    initPrepostChunkProcessing(0);
-
     test_basic();
     test_streaming();
     test_random_write();
