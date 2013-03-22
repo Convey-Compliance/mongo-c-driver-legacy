@@ -30,7 +30,7 @@ typedef uint64_t gridfs_offset;
 
 /* A GridFS represents a single collection of GridFS files in the database. */
 typedef struct {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     mongo *client; /**> The client to db-connection. */
@@ -46,7 +46,7 @@ typedef struct {
 
 /* A GridFile is a single GridFS file. */
 typedef struct {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig;      /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     gridfs *gfs;        /**> The GridFS where the GridFile is located */
@@ -63,7 +63,7 @@ typedef struct {
     int chunkSize;   /**> Let's cache here the cache size to avoid accesing it on the Meta mongo object every time is needed */
 } gridfile;
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   #define INIT_GRIDFILE  {MONGO_SIGNATURE}
 #else
   #define INIT_GRIDFILE  {NULL}
@@ -328,13 +328,20 @@ MONGO_EXPORT bson_bool_t gridfile_get_boolean( gridfile *gfile,
                                   const char *name );
 
 /**
- *  Returns the metadata of GridFile
- *  @param gfile - the working GridFile
+ *  Returns the metadata of GridFile. Calls bson_empty on metadata
+ *  if none exits.
  *
- *  @return - the metadata of the Gridfile in a bson object
- *            (an empty bson is returned if none exists)
+ * @note When copyData is false, the metadata object becomes invalid
+ *       when gfile is destroyed. For either value of copyData, you
+ *       must pass the metadata object to bson_destroy when you are
+ *       done using it.
+ *
+ *  @param gfile - the working GridFile
+ *  @param metadata an uninitialized BSON object to receive the metadata.
+ *  @param copyData when true, makes a copy of the scope data which will remain
+ *    valid when the grid file is deallocated.
  */
-MONGO_EXPORT void gridfile_get_metadata( gridfile *gfile, bson* out );
+MONGO_EXPORT void gridfile_get_metadata( gridfile *gfile, bson* metadata, bson_bool_t copyData );
 
 /**
  *  Returns the number of chunks in the GridFile

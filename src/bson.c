@@ -16,7 +16,7 @@
  */
 
 #if _MSC_VER && ! _CRT_SECURE_NO_WARNINGS   
-  #define _CRT_SECURE_NO_WARNINGS  
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #include <stdlib.h>
@@ -36,10 +36,20 @@ static const int zero = 0;
 /* Static data to use with bson_empty( ) */
 static char *bson_shared_empty_data = "\005\0\0\0\0";
 
-/* Custom standard function pointers. */
+/* Memory allocation function pointers */
+
 void *( *bson_malloc_func )( size_t ) = malloc;
 void *( *bson_realloc_func )( void *, size_t ) = realloc;
 void  ( *bson_free_func )( void * ) = free;
+
+MONGO_EXPORT void set_mem_alloc_functions( void *( *custom_bson_malloc_func )( size_t ), 
+                                           void *( *custom_bson_realloc_func )( void *, size_t ),
+                                           void  ( *custom_bson_free_func )( void * ) ) {
+  bson_malloc_func = custom_bson_malloc_func;
+  bson_realloc_func = custom_bson_realloc_func;
+  bson_free_func = custom_bson_free_func;
+}
+
 #ifdef R_SAFETY_NET
 bson_printf_func bson_printf;
 #else
@@ -51,6 +61,9 @@ bson_sprintf_func bson_sprintf = sprintf;
 static int _bson_errprintf( const char *, ... );
 bson_printf_func bson_errprintf = _bson_errprintf;
 
+static void _bson_zero( bson *b );
+static size_t _bson_position( const bson *b );
+
 /* ObjectId fuzz functions. */
 static int ( *oid_fuzz_func )( void ) = NULL;
 static int ( *oid_inc_func )( void )  = NULL;
@@ -61,68 +74,53 @@ static int ( *oid_inc_func )( void )  = NULL;
 
 MONGO_EXPORT bson* bson_create( void ) {
     bson *b = (bson*)bson_malloc(sizeof(bson));
-    b->data = NULL;
+    _bson_zero( b );    
     ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
 	return b;
 }
 
 MONGO_EXPORT void bson_dispose(bson* b) {
-  check_destroyed_mongo_object( b );
-  ASSIGN_SIGNATURE(b, 0);
-	bson_free(b);
+    check_destroyed_mongo_object( b );
+    ASSIGN_SIGNATURE(b, 0);
+    bson_free(b);
 }
 
-/* emptyData made global, bson_destroy now is smart not to attempt freeing
-   the data field if it's equals to emptyData */ 
-
-static char *emptyData = "\005\0\0\0\0";
-
-MONGO_EXPORT bson *bson_empty( bson *obj ) {
-    ASSIGN_SIGNATURE(obj, MONGO_SIGNATURE);
-    bson_init_data( obj, bson_shared_empty_data );
-    obj->finished = 1;
-    obj->err = 0;
-    obj->errstr = NULL;
-    obj->stackPtr = NULL;
-    obj->stackSize = 0;
-    obj->stackPos = 0;
-    return obj;
+/* When passed a char * of a BSON data block, returns its reported size */
+static int bson_finished_data_size( const char *data ) {
+    int i;
+    bson_little_endian32( &i, data );
+    return i;
 }
 
-MONGO_EXPORT int bson_copy( bson *out, const bson *in ) {
-    if ( !out || !in ) return BSON_ERROR;
-    if ( !in->finished ) return BSON_ERROR;
-    check_mongo_object( (void*)in );
-    bson_init_size( out, bson_size( in ) );
-    memcpy( out->data, in->data, bson_size( in ) );
-    out->finished = 1;
-
-    return BSON_OK;
-}
-
-int bson_init_data( bson *b, char *data ) {
-    check_mongo_object( b );
+int bson_init_finished_data( bson *b, char *data, bson_bool_t ownsData ) {
+    _bson_zero( b );
     b->data = data;
-    return BSON_OK;
-}
-
-int bson_init_finished_data( bson *b, char *data ) {
-    bson_init_data( b, data );
+    b->dataSize = bson_finished_data_size( data );
+    b->ownsData = ownsData;
     b->finished = 1;
     return BSON_OK;
 }
 
-static void _bson_reset( bson *b ) {
-    check_mongo_object( b );
-    b->finished = 0;
-    b->stackPos = 0;
-    b->err = 0;
-    b->errstr = NULL;
-    b->stackPtr = NULL;
-    b->stackSize = 0;
+int bson_init_finished_data_with_copy( bson *b, const char *data ) {
+    int dataSize = bson_finished_data_size( data );
+    if ( bson_init_size( b, dataSize ) == BSON_ERROR ) return BSON_ERROR;
+    memcpy( b->data, data, dataSize );
+    b->finished = 1;
+    return BSON_OK;
 }
 
-MONGO_EXPORT int bson_size( const bson *b ) {
+MONGO_EXPORT const bson *bson_empty( bson *obj ) {
+    bson_init_finished_data( obj, bson_shared_empty_data, 0 );
+    return obj;
+}
+
+MONGO_EXPORT int bson_copy( bson *out, const bson *in ) {
+    check_mongo_object( in );
+    if ( !out || !in ) return BSON_ERROR;
+    if ( !in->finished ) return BSON_ERROR;
+    return bson_init_finished_data_with_copy( out, in->data );
+}
+MONGO_EXPORT int bson_size( const bson *b) {
     int i;
     if ( ! b || ! b->data )
         return 0;
@@ -131,9 +129,13 @@ MONGO_EXPORT int bson_size( const bson *b ) {
     return i;
 }
 
+static size_t _bson_position( const bson *b ) {
+    return b->cur - b->data;
+}
+
 MONGO_EXPORT size_t bson_buffer_size( const bson *b ) {
     check_mongo_object( (void*)b );
-    return (b->cur - b->data + 1);
+    return _bson_position(b) + 1;
 }
 
 
@@ -270,11 +272,10 @@ MONGO_EXPORT void bson_print_raw( const char *data , int depth ) {
             break;
         case BSON_CODEWSCOPE:
             bson_printf( "BSON_CODE_W_SCOPE: %s", bson_iterator_code( &i ) );
-            /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
-            bson_iterator_code_scope( &i, &scope );
+            bson_iterator_code_scope_init( &i, &scope, 0 );
             bson_printf( "\n\t SCOPE: " );
             bson_print( &scope );
-            /* bson_destroy( &scope ); */ /* review - causes free error */
+            bson_destroy( &scope );
             break;
         case BSON_INT:
             bson_printf( "%d" , bson_iterator_int( &i ) );
@@ -578,15 +579,16 @@ MONGO_EXPORT const char *bson_iterator_code( const bson_iterator *i ) {
     }
 }
 
-MONGO_EXPORT void bson_iterator_code_scope( const bson_iterator *i, bson *scope ) {
+MONGO_EXPORT void bson_iterator_code_scope_init( const bson_iterator *i, bson *scope, bson_bool_t copyData ) {
     check_mongo_object( (void*)scope );
     check_mongo_object( (void*)i );
     if ( bson_iterator_type( i ) == BSON_CODEWSCOPE ) {
-        int code_len;
-        bson_little_endian32( &code_len, bson_iterator_value( i )+4 );
-        bson_init_data( scope, ( void * )( bson_iterator_value( i )+8+code_len ) );
-        _bson_reset( scope );
-        scope->finished = 1;
+        int codeLen = bson_finished_data_size( bson_iterator_value( i )+4 );
+        const char * scopeData = bson_iterator_value( i )+8+codeLen;
+        if( copyData )
+            bson_init_finished_data_with_copy( scope, scopeData );
+        else
+            bson_init_finished_data( scope, (char *)scopeData, 0 );
     }
     else {
         bson_empty( scope );
@@ -635,12 +637,16 @@ MONGO_EXPORT const char *bson_iterator_regex_opts( const bson_iterator *i ) {
 
 }
 
-MONGO_EXPORT void bson_iterator_subobject( const bson_iterator *i, bson *sub ) {
+MONGO_EXPORT void bson_iterator_subobject_init( const bson_iterator *i, bson *sub, bson_bool_t copyData ) {
+    const char *data;
     check_mongo_object( (void*)sub );
     check_mongo_object( (void*)i );
-    bson_init_data( sub, ( char * )bson_iterator_value( i ) );
-    _bson_reset( sub );
-    sub->finished = 1;
+    data = bson_iterator_value( i );
+    if( copyData ) {
+        bson_init_finished_data_with_copy( sub, data );
+    } else {
+        bson_init_finished_data( sub, (char *)data, 0 );
+    }
 }
 
 MONGO_EXPORT void bson_iterator_subiterator( const bson_iterator *i, bson_iterator *sub ) {
@@ -653,15 +659,35 @@ MONGO_EXPORT void bson_iterator_subiterator( const bson_iterator *i, bson_iterat
    BUILDING
    ------------------------------ */
 
-static void _bson_init_size( bson *b, int size ) {
+static void _bson_zero( bson *b ) {
+    memset( b, 0, sizeof( bson ) );
     ASSIGN_SIGNATURE(b, MONGO_SIGNATURE);
-    if( size == 0 )
-        b->data = NULL;
-    else
-        b->data = ( char * )bson_malloc( size );
-    b->dataSize = size;
+}
+
+MONGO_EXPORT int bson_init( bson *b ) {
+    return bson_init_size( b, initialBufferSize );
+}
+
+int bson_init_size( bson *b, int size ) {
+    _bson_zero( b );
+    if( size != 0 )
+    {
+        char * data = (char *) bson_malloc( size );
+        if (data == NULL) return BSON_ERROR;
+        b->data = data;
+        b->dataSize = size;
+    }
+    b->ownsData = 1;
     b->cur = b->data + 4;
-    _bson_reset( b );
+    return BSON_OK;
+}
+
+int bson_init_unfinished_data( bson *b, char *data, int dataSize, bson_bool_t ownsData ) {
+    _bson_zero( b );
+    b->data = data;
+    b->dataSize = dataSize;
+    b->ownsData = ownsData;
+    return BSON_OK;
 }
 
 static int _bson_append_grow_stack( bson * b ) {
@@ -696,14 +722,6 @@ static int _bson_append_grow_stack( bson * b ) {
     return BSON_OK;
 }
 
-MONGO_EXPORT void bson_init( bson *b ) {
-    _bson_init_size( b, initialBufferSize );
-}
-
-void bson_init_size( bson *b, int size ) {
-    _bson_init_size( b, size );
-}
-
 static void bson_append_byte( bson *b, char c ) {
     check_mongo_object( (void*)b );
     b->cur[0] = c;
@@ -734,7 +752,7 @@ static void bson_append64( bson *b, const void *data ) {
 }
 
 int bson_ensure_space( bson *b, const size_t bytesNeeded ) {
-    size_t pos = b->cur - b->data;
+    size_t pos = _bson_position(b);
     char *orig = b->data;
     int new_size;
 
@@ -754,7 +772,12 @@ int bson_ensure_space( bson *b, const size_t bytesNeeded ) {
         }
     }
 
-    b->data = (char*) bson_realloc( b->data, new_size );
+    if ( ! b->ownsData ) {
+        b->err = BSON_DOES_NOT_OWN_DATA;
+        return BSON_ERROR;
+    }
+
+    b->data = bson_realloc( b->data, new_size );
     if ( !b->data )
         bson_fatal_msg( !!b->data, "realloc() failed" );
 
@@ -776,11 +799,11 @@ MONGO_EXPORT int bson_finish( bson *b ) {
         bson_fatal_msg(!b->stackPos, "Subobject not finished before bson_finish().");
         if ( bson_ensure_space( b, 1 ) == BSON_ERROR ) return BSON_ERROR;
         bson_append_byte( b, 0 );
-        if ( b->cur - b->data >= INT32_MAX ) {
+        if ( _bson_position(b) >= INT32_MAX ) {
             b->err = BSON_SIZE_OVERFLOW;
             return BSON_ERROR;
         }
-        i = ( int )( b->cur - b->data );
+        i = ( int ) _bson_position(b);
         bson_little_endian32( b->data, &i );
         b->finished = 1;
     }
@@ -791,13 +814,12 @@ MONGO_EXPORT int bson_finish( bson *b ) {
 MONGO_EXPORT void bson_destroy( bson *b ) {
     if ( b ) {
         check_mongo_object( b );
-        if ( b->data == bson_shared_empty_data ) {
-            /* Don't deallocate shared static data */
-            b->data = NULL;
-        } else if ( b->data != NULL ) {
+        if ( b->ownsData && b->data != NULL ) {
             bson_free( b->data );
-            b->data = NULL;
         }
+        b->data = NULL;
+        b->dataSize = 0;
+        b->ownsData = 0;        
         if ( b->stackPtr && b->stackPtr != b->stack ) {
             bson_free( b->stackPtr );
             b->stackPtr = NULL;
@@ -1080,7 +1102,7 @@ MONGO_EXPORT int bson_append_start_object( bson *b, const char *name ) {
     check_mongo_object( (void*)b );
     if ( bson_append_estart( b, BSON_OBJECT, name, 5 ) == BSON_ERROR ) return BSON_ERROR;
     if ( b->stackPos >= b->stackSize && _bson_append_grow_stack( b ) == BSON_ERROR ) return BSON_ERROR;
-    b->stackPtr[ b->stackPos++ ] = b->cur - b->data;
+    b->stackPtr[ b->stackPos++ ] = _bson_position(b);
     bson_append32( b , &zero );
     return BSON_OK;
 }
@@ -1089,7 +1111,7 @@ MONGO_EXPORT int bson_append_start_array( bson *b, const char *name ) {
     check_mongo_object( (void*)b );
     if ( bson_append_estart( b, BSON_ARRAY, name, 5 ) == BSON_ERROR ) return BSON_ERROR;
     if ( b->stackPos >= b->stackSize && _bson_append_grow_stack( b ) == BSON_ERROR ) return BSON_ERROR;
-    b->stackPtr[ b->stackPos++ ] = b->cur - b->data;
+    b->stackPtr[ b->stackPos++ ] = _bson_position(b);
     bson_append32( b , &zero );
     return BSON_OK;
 }

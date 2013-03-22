@@ -108,6 +108,19 @@ MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i) {
     return 0;
 }
 
+MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( void ) {
+    mongo_write_concern* wc = (mongo_write_concern*)bson_malloc( sizeof( mongo_write_concern ) );
+    mongo_write_concern_init( wc );
+    return wc;
+}
+
+
+MONGO_EXPORT void mongo_write_concern_dispose(mongo_write_concern* write_concern) {
+    check_destroyed_mongo_object( write_concern );
+    ASSIGN_SIGNATURE(write_concern, 0);
+    bson_free( write_concern );
+}
+
 
 MONGO_EXPORT mongo_cursor* mongo_cursor_create( void ) {
     mongo_cursor* MongoCursor = (mongo_cursor*)bson_malloc(sizeof(mongo_cursor));
@@ -294,24 +307,6 @@ static void mongo_set_last_error( mongo *conn, bson_iterator *it, bson *obj ) {
 
 static const int ZERO = 0;
 static const int ONE = 1;
-
-static const char *create_database_name_with_ns( const char *ns, const char **collection_name ) {
-    const char *collection = ns;
-    char *database_name;
-    
-    while ( collection[0] != '.' ) {
-        collection++;
-    }
-    collection++;
-    database_name = malloc( collection - ns );
-    strncpy( database_name, ns, collection - ns );
-    database_name[collection - ns - 1] = 0;
-    if ( collection_name ) {
-        *collection_name = collection;
-    }
-    return database_name;
-}
-
 static mongo_message *mongo_message_create( size_t len , int id , int responseTo , int op ) {
     mongo_message *mm;
 
@@ -483,14 +478,14 @@ MONGO_EXPORT void mongo_init_sockets( void ) {
 /* WC1 is completely static */
 static char WC1_data[] = {23,0,0,0,16,103,101,116,108,97,115,116,101,114,114,111,114,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   static bson WC1_cmd = {
-      MONGO_SIGNATURE, WC1_data, WC1_data, 128, 1, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0, ""
+      MONGO_SIGNATURE, WC1_data, WC1_data, 128, 1, 0, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0
   };
   static mongo_write_concern WC1 = { MONGO_SIGNATURE, 1, 0, 0, 0, 0, &WC1_cmd }; /* w = 1 */
 #else
 static bson WC1_cmd = {
-    WC1_data, WC1_data, 128, 1, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0, "", 0, 0
+    WC1_data, WC1_data, 128, 1, 0, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0, 0, 0
 };
 static mongo_write_concern WC1 = { 1, 0, 0, 0, 0, &WC1_cmd }; /* w = 1 */
 #endif
@@ -506,13 +501,13 @@ MONGO_EXPORT void mongo_init( mongo *conn ) {
 
 MONGO_EXPORT int mongo_client( mongo *conn , const char *host, int port ) {
     check_mongo_object(conn);
-    mongo_init( conn );
+    mongo_init( conn );    
 
     conn->primary = (mongo_host_port*) bson_malloc( sizeof( mongo_host_port ) );
     strncpy( conn->primary->host, host, strlen( host ) + 1 );
     conn->primary->port = port;
     conn->primary->next = NULL;
-
+    
     if( mongo_env_socket_connect( conn, host, port ) != MONGO_OK )
         return MONGO_ERROR;
 
@@ -742,6 +737,11 @@ MONGO_EXPORT int mongo_replica_set_client( mongo *conn ) {
 
                 /* Primary found, so return. */
                 else if( conn->replica_set->primary_connected ) {
+                    if( conn->primary ) {
+                      /* If we don't free primary we will have a memory leak */
+                      bson_free( conn->primary );
+                      conn->primary = NULL;
+                    }
                     conn->primary = (mongo_host_port*)bson_malloc( sizeof( mongo_host_port ) );
                     strncpy( conn->primary->host, node->host, strlen( node->host ) + 1 );
                     conn->primary->port = node->port;
@@ -1172,18 +1172,6 @@ MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
 Write Concern API
 **********************************************************************/
 
-MONGO_EXPORT mongo_write_concern* mongo_write_concern_create( ) {
-    mongo_write_concern* wc = (mongo_write_concern*)bson_malloc( sizeof( mongo_write_concern ) );
-    mongo_write_concern_init( wc );
-    return wc;
-};
-
-MONGO_EXPORT void mongo_write_concern_free( mongo_write_concern* write_concern ) {
-    check_destroyed_mongo_object( write_concern );
-    ASSIGN_SIGNATURE(write_concern, 0);
-    bson_free( write_concern );
-};
-
 MONGO_EXPORT void mongo_write_concern_init( mongo_write_concern *write_concern ) {
     memset( write_concern, 0, sizeof( mongo_write_concern ) );
     ASSIGN_SIGNATURE(write_concern, MONGO_SIGNATURE);
@@ -1375,7 +1363,7 @@ static int mongo_cursor_op_query( mongo_cursor *cursor ) {
     }
 
     if( cursor->reply->fields.num == 1 ) {
-        bson_init_data( &temp, &cursor->reply->objs );
+        bson_init_finished_data( &temp, &cursor->reply->objs, 0 );
         if( bson_find( &it, &temp, "$err" ) ) {
             mongo_set_last_error( cursor->conn, &it, &temp );
             cursor->err = MONGO_CURSOR_QUERY_FAIL;
@@ -1580,7 +1568,7 @@ MONGO_EXPORT int mongo_cursor_next( mongo_cursor *cursor ) {
 
     /* first */
     if ( cursor->current.data == NULL ) {
-        bson_init_finished_data( &cursor->current, &cursor->reply->objs );
+        bson_init_finished_data( &cursor->current, &cursor->reply->objs, 0 );
         return MONGO_OK;
     }
 
@@ -1601,10 +1589,10 @@ MONGO_EXPORT int mongo_cursor_next( mongo_cursor *cursor ) {
                 return MONGO_ERROR;
         }
 
-        bson_init_finished_data( &cursor->current, &cursor->reply->objs );
+        bson_init_finished_data( &cursor->current, &cursor->reply->objs, 0 );
     }
     else {
-        bson_init_finished_data( &cursor->current, next_object );
+        bson_init_finished_data( &cursor->current, next_object, 0 );
     }
 
     return MONGO_OK;

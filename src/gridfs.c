@@ -35,7 +35,7 @@ MONGO_EXPORT gridfs *gridfs_create( void ) {
 
 MONGO_EXPORT void gridfs_dispose(gridfs *gfs) {
   check_destroyed_mongo_object( gfs );
-  free(gfs);
+  bson_free(gfs);
 }
 
 MONGO_EXPORT gridfile *gridfile_create( void ) {
@@ -47,7 +47,7 @@ MONGO_EXPORT gridfile *gridfile_create( void ) {
 
 MONGO_EXPORT void gridfile_dispose(gridfile *gf) {
   check_destroyed_mongo_object( gf );
-  free(gf);
+  bson_free(gf);
 }
 
 MONGO_EXPORT void gridfile_get_descriptor(gridfile *gf, bson *out) {
@@ -795,13 +795,13 @@ MONGO_EXPORT bson_bool_t gridfile_get_boolean(gridfile *gfile, const char *name)
   }
 }
 
-MONGO_EXPORT void gridfile_get_metadata(gridfile *gfile, bson *out) {
+MONGO_EXPORT void gridfile_get_metadata(gridfile *gfile, bson *out, bson_bool_t copyData) {
   bson_iterator it = INIT_ITERATOR;
 
   check_mongo_object( gfile );
 
   if (bson_find(&it, gfile->meta, "metadata")) {
-    bson_iterator_subobject(&it, out);
+    bson_iterator_subobject_init(&it, out, copyData);
   } else {
     bson_empty(out);
   } 
@@ -860,7 +860,7 @@ static void gridfile_flush_pendingchunk(gridfile *gfile) {
     gfile->pending_len = 0;
   }
   if( targetBuf && targetBuf != gfile->pending_data ) {
-    free( targetBuf );
+    bson_free( targetBuf );
   }
 }
 
