@@ -129,23 +129,13 @@ typedef enum {
 typedef int bson_bool_t;
 
 typedef struct {  
-#ifdef MONGO_ZOMBIE_CHECK
-    int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     const char *cur;
     bson_bool_t first;
 } bson_iterator;
 
-#ifdef MONGO_ZOMBIE_CHECK
-  #define INIT_ITERATOR {MONGO_SIGNATURE, NULL, 0}
-#else
-  #define INIT_ITERATOR {NULL, 0}
-#endif
+#define INIT_ITERATOR {NULL, 0}
 
 typedef struct {
-#ifdef MONGO_ZOMBIE_CHECK
-    int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     char *data;    /**< Pointer to a block of data in this BSON object. */
     char *cur;     /**< Pointer to the current position. */
     int dataSize;  /**< The number of bytes allocated to char *data. */
@@ -158,11 +148,7 @@ typedef struct {
     int stackSize;        /**< Number of elements in the current stack */
 } bson;
 
-#ifdef MONGO_ZOMBIE_CHECK
-  #define INIT_BSON {MONGO_SIGNATURE, NULL, NULL}
-#else
-  #define INIT_BSON {NULL, NULL}
-#endif
+#define INIT_BSON {NULL, NULL}
 
 #pragma pack(1)
 typedef union {
@@ -177,21 +163,6 @@ typedef struct {
     int i; /* increment */
     int t; /* time in seconds */
 } bson_timestamp_t;
-
-#define MONGO_SIGNATURE 0xFFEEFFEE
-#define MONGO_SIGNATURE_READY_TO_DISPOSE 0xFFAAFFAA
-
-static const char* SIG_MISMATCH_STR = "Object MONGO_SIGNATURE mismatch. This is likely caused by memory corruption using an uninitialized object or a destroyed object";
-
-#ifdef MONGO_ZOMBIE_CHECK
-  #define check_mongo_object(obj) bson_fatal_msg((obj) && *((int*)(obj)) == MONGO_SIGNATURE, SIG_MISMATCH_STR)
-  #define check_destroyed_mongo_object(obj) bson_fatal_msg((obj) && (*((int*)(obj)) == MONGO_SIGNATURE || *((int*)(obj)) == MONGO_SIGNATURE_READY_TO_DISPOSE), SIG_MISMATCH_STR)
-  #define ASSIGN_SIGNATURE(obj, sig) (obj)->mongo_sig = sig
-#else
-  #define check_mongo_object(obj) 
-  #define check_destroyed_mongo_object(obj) 
-  #define ASSIGN_SIGNATURE(obj, sig)
-#endif
 
 MONGO_EXPORT void set_mem_alloc_functions( void *( *custom_bson_malloc_func )( size_t ), 
                                            void *( *custom_bson_realloc_func )( void *, size_t ),

@@ -145,9 +145,6 @@ typedef struct mongo_host_port {
 } mongo_host_port;
 
 typedef struct mongo_write_concern {
-#ifdef MONGO_ZOMBIE_CHECK
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     int w;            /**< Number of total replica write copies to complete including the primary. */
     int wtimeout;     /**< Number of milliseconds before replication timeout. */
     int j;            /**< If non-zero, block until the journal sync. */
@@ -165,9 +162,6 @@ typedef struct {
 } mongo_replica_set;
 
 typedef struct mongo {
-#ifdef MONGO_ZOMBIE_CHECK
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     mongo_host_port *primary;  /**< Primary connection info. */
     mongo_replica_set *replica_set;    /**< replica_set object if connected to a replica set. */
     size_t sock;                  /**< Socket file descriptor. */
@@ -186,9 +180,6 @@ typedef struct mongo {
 } mongo;
 
 typedef struct {
-#ifdef MONGO_ZOMBIE_CHECK
-    int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
-#endif
     mongo_reply *reply;  /**< reply is owned by cursor */
     mongo *conn;       /**< connection is *not* owned by cursor */
     const char *ns;    /**< owned by cursor */
@@ -203,11 +194,7 @@ typedef struct {
     int skip;          /**< Bitfield containing cursor options. */
 } mongo_cursor;
 
-#ifdef MONGO_ZOMBIE_CHECK
-  #define INIT_MONGO_CURSOR {MONGO_SIGNATURE}
-#else
-  #define INIT_MONGO_CURSOR {NULL}
-#endif
+#define INIT_MONGO_CURSOR {NULL}
 
 /*********************************************************************
 Connection API
