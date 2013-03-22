@@ -11,7 +11,7 @@
 #include <unistd.h>
 #endif
 
-#define LARGE 5*1024*1024
+#define LARGE 3*1024*1024
 #define UPPER 2000*1024
 #define MEDIUM 1024*512
 #define LOWER 1024*128
