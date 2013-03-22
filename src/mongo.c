@@ -478,7 +478,7 @@ MONGO_EXPORT void mongo_init_sockets( void ) {
 /* WC1 is completely static */
 static char WC1_data[] = {23,0,0,0,16,103,101,116,108,97,115,116,101,114,114,111,114,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   static bson WC1_cmd = {
       MONGO_SIGNATURE, WC1_data, WC1_data, 128, 1, 0, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0, 0
   };

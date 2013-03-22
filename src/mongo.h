@@ -145,7 +145,7 @@ typedef struct mongo_host_port {
 } mongo_host_port;
 
 typedef struct mongo_write_concern {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     int w;            /**< Number of total replica write copies to complete including the primary. */
@@ -165,7 +165,7 @@ typedef struct {
 } mongo_replica_set;
 
 typedef struct mongo {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     mongo_host_port *primary;  /**< Primary connection info. */
@@ -186,7 +186,7 @@ typedef struct mongo {
 } mongo;
 
 typedef struct {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig;    /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     mongo_reply *reply;  /**< reply is owned by cursor */
@@ -203,7 +203,7 @@ typedef struct {
     int skip;          /**< Bitfield containing cursor options. */
 } mongo_cursor;
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   #define INIT_MONGO_CURSOR {MONGO_SIGNATURE}
 #else
   #define INIT_MONGO_CURSOR {NULL}

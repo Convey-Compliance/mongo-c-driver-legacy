@@ -129,21 +129,21 @@ typedef enum {
 typedef int bson_bool_t;
 
 typedef struct {  
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     const char *cur;
     bson_bool_t first;
 } bson_iterator;
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   #define INIT_ITERATOR {MONGO_SIGNATURE, NULL, 0}
 #else
   #define INIT_ITERATOR {NULL, 0}
 #endif
 
 typedef struct {
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
     int mongo_sig; /** MONGO_SIGNATURE to validate object for memory corruption */
 #endif
     char *data;    /**< Pointer to a block of data in this BSON object. */
@@ -158,7 +158,7 @@ typedef struct {
     int stackSize;        /**< Number of elements in the current stack */
 } bson;
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   #define INIT_BSON {MONGO_SIGNATURE, NULL, NULL}
 #else
   #define INIT_BSON {NULL, NULL}
@@ -183,7 +183,7 @@ typedef struct {
 
 static const char* SIG_MISMATCH_STR = "Object MONGO_SIGNATURE mismatch. This is likely caused by memory corruption using an uninitialized object or a destroyed object";
 
-#ifdef MONGO_MEMORY_PROTECTION
+#ifdef MONGO_ZOMBIE_CHECK
   #define check_mongo_object(obj) bson_fatal_msg((obj) && *((int*)(obj)) == MONGO_SIGNATURE, SIG_MISMATCH_STR)
   #define check_destroyed_mongo_object(obj) bson_fatal_msg((obj) && (*((int*)(obj)) == MONGO_SIGNATURE || *((int*)(obj)) == MONGO_SIGNATURE_READY_TO_DISPOSE), SIG_MISMATCH_STR)
   #define ASSIGN_SIGNATURE(obj, sig) (obj)->mongo_sig = sig
