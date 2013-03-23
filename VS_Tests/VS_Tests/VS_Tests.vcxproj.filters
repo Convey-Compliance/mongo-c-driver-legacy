@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Tests">
+      <UniqueIdentifier>{fe453906-83d9-42cd-81b9-5440b7d81052}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mongo_Client">
+      <UniqueIdentifier>{5415213c-1d41-40f2-bcc2-ee266090575e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Mongo_Client">
+      <UniqueIdentifier>{3540bea7-3470-4766-aa3c-2ddc78f67f47}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bson.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\encoding.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\env.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gridfs.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\md5.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mongo.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\test\gridfs_test.c">
+      <Filter>Source Files\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bson.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\encoding.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\env.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gridfs.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\md5.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mongo.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\numbers.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

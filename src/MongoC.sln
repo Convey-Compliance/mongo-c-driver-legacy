@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MongoC", "MongoC.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestMongoClient", "..\TestMongoClient\TestMongoClient.vcxproj", "{6B8DB5B3-74AB-48F2-B430-1A4DE685B082}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VS_Tests", "..\VS_Tests\VS_Tests\VS_Tests.vcxproj", "{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -28,6 +30,12 @@ Global
 		{6B8DB5B3-74AB-48F2-B430-1A4DE685B082}.Release|Win32.ActiveCfg = Release|Win32
 		{6B8DB5B3-74AB-48F2-B430-1A4DE685B082}.Release|Win32.Build.0 = Release|Win32
 		{6B8DB5B3-74AB-48F2-B430-1A4DE685B082}.Release|x64.ActiveCfg = Debug|x64
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Debug|Win32.Build.0 = Debug|Win32
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Debug|x64.ActiveCfg = Debug|Win32
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Release|Win32.ActiveCfg = Release|Win32
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Release|Win32.Build.0 = Release|Win32
+		{A1BE7547-A1A8-49FA-B0FC-4C5FC271DBC8}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
