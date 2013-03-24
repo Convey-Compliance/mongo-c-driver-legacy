@@ -1084,7 +1084,7 @@ MONGO_EXPORT gridfs_offset gridfile_write_file(gridfile *gfile, FILE *stream) {
   gridfs_offset total_written = 0;
 
   do {
-    data_read = gridfile_read( gfile, DEFAULT_CHUNK_SIZE, buffer );
+    data_read = (size_t)gridfile_read( gfile, DEFAULT_CHUNK_SIZE, buffer );
     if( data_read > 0 ){
       data_written = fwrite( buffer, sizeof(char), data_read, stream );
       total_written += data_written;              
