@@ -30,11 +30,12 @@ void fill_buffer_randomly( char *data, int64_t length ) {
     int64_t i;
     int random;
     char *letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int nletters = (int)strlen( letters )+1;
+    int nletters = (int)strlen( letters );
+    char *cur;
 
-    for ( i = 0; i < length; i++ ) {
+    for ( i = 0, cur = data; i < length; i++, cur++ ) {
         random = rand() % nletters;
-        *( data + i ) = letters[random];
+        *cur = letters[random];
     }
 }
 
@@ -138,11 +139,8 @@ void test_basic( void ) {
     srand((unsigned int) time( NULL ) );
 
     INIT_SOCKETS_FOR_WINDOWS;
+    CONN_CLIENT_TEST;
 
-    if ( mongo_client( conn, TEST_SERVER, 27017 ) ) {
-        printf( "failed to connect 2\n" );
-        exit( 1 );
-    }
 
     gridfs_init( conn, "test", "fs", gfs );
 
@@ -192,11 +190,7 @@ void test_streaming( void ) {
     srand( (unsigned int)time( NULL ) );
 
     INIT_SOCKETS_FOR_WINDOWS;
-
-    if ( mongo_client( conn , TEST_SERVER, 27017 ) ) {
-        printf( "failed to connect 3\n" );
-        exit( 1 );
-    }
+    CONN_CLIENT_TEST;
 
     fill_buffer_randomly( medium, ( int64_t )2 * MEDIUM );
     fill_buffer_randomly( small, ( int64_t )LOWER );
@@ -247,11 +241,8 @@ void test_random_write() {
     srand((unsigned int) time( NULL ) );
 
     INIT_SOCKETS_FOR_WINDOWS;
+    CONN_CLIENT_TEST;
 
-    if ( mongo_client( conn, TEST_SERVER, 27017 ) ) {
-        printf( "failed to connect 2\n" );
-        exit( 1 );
-    }
 
     gridfs_init( conn, "test", "fs", gfs );
 
@@ -287,7 +278,7 @@ void test_random_write() {
 
         gridfile_writer_done(gfile);
         ASSERT(gfile->pos == j + n);
-        gridfile_dispose(gfile);
+        gridfile_dealloc(gfile);
         test_gridfile( gfs, data_before, j + n > i ? j + n : i, "input-buffer", "text/html" );
 
         /* Input from file */
@@ -327,11 +318,7 @@ void test_random_write2( void ) {
     srand( 123 ); // Init with a predictable value
 
     INIT_SOCKETS_FOR_WINDOWS;
-
-    if ( mongo_client( conn , TEST_SERVER, 27017 ) ) {
-        printf( "failed to connect 3\n" );
-        exit( 1 );
-    }
+    CONN_CLIENT_TEST;
 
     fill_buffer_randomly( buf, ( int64_t )LARGE );
     memset( zeroedbuf, 0, LARGE ); 
@@ -393,11 +380,8 @@ void test_large( void ) {
     srand( (unsigned int) time( NULL ) );
 
     INIT_SOCKETS_FOR_WINDOWS;
-
-    if ( mongo_client( conn, TEST_SERVER, 27017 ) ) {
-        printf( "failed to connect 1\n" );
-        exit( 1 );
-    }    
+    CONN_CLIENT_TEST;
+    
     mongo_write_concern_init(&wc);
     wc.j = 1;
     mongo_write_concern_finish(&wc);
