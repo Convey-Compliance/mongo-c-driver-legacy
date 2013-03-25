@@ -563,7 +563,6 @@ void mongo_parse_host( const char *host_string, mongo_host_port *host_port ) {
 
 static void mongo_replica_set_check_seed( mongo *conn ) {
     bson out;
-    //bson hosts;
     const char *data;
     bson_iterator it;
     bson_iterator it_sub;
@@ -571,9 +570,6 @@ static void mongo_replica_set_check_seed( mongo *conn ) {
     mongo_host_port *host_port = NULL;
 
     out.data = NULL;
-
-    //hosts.data = NULL;
-
     if( mongo_simple_int_command( conn, "admin", "ismaster", 1, &out ) == MONGO_OK ) {
 
         if( bson_find( &it, &out, "hosts" ) ) {
@@ -600,7 +596,6 @@ static void mongo_replica_set_check_seed( mongo *conn ) {
     }
 
     bson_destroy( &out );
-    //bson_destroy( &hosts );
     mongo_env_close_socket( conn->sock );
     conn->sock = 0;
     conn->connected = 0;
