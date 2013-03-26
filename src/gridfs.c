@@ -108,7 +108,7 @@ static bson *chunk_new(bson_oid_t id, int chunkNumber, char** dataBuf, const cha
   if( gridfs_write_filter( dataBuf, &dataBufLen, srcData, len, flags) != 0 ) {
     return NULL;
   }
-  bson_init_size(b, (int)dataBufLen + 128); /* a little space for field names, files_id, and n */
+  bson_init_size(b, (int) dataBufLen + 128); /* a little space for field names, files_id, and n */
   bson_append_oid(b, "files_id", &id);
   bson_append_int(b, "n", chunkNumber);
   bson_append_binary(b, "data", BSON_BIN_BINARY, *dataBuf, (int)dataBufLen);
@@ -219,7 +219,7 @@ MONGO_EXPORT void gridfs_set_caseInsensitive(gridfs *gfs, bson_bool_t newValue){
 static int bson_append_string_uppercase( bson *b, const char *name, const char *str, bson_bool_t upperCase ) {
   char *strUpperCase;
   if ( upperCase ) {
-    int res;
+    int res; 
     strUpperCase = (char *) bson_malloc( (int) strlen( str ) + 1 );
     strcpy(strUpperCase, str);
     _strupr(strUpperCase);
@@ -349,19 +349,23 @@ MONGO_EXPORT int gridfs_store_file(gridfs *gfs, const char *filename, const char
   return ( chunkLen == 0) || ( bytes_written == chunkLen ) ? MONGO_OK : MONGO_ERROR;  
 }
 
-MONGO_EXPORT void gridfs_remove_filename(gridfs *gfs, const char *filename) {
+MONGO_EXPORT int gridfs_remove_filename(gridfs *gfs, const char *filename) {
   bson query = INIT_BSON;
   mongo_cursor *files;
   bson file = INIT_BSON;
   bson_iterator it = INIT_ITERATOR;
   bson_oid_t id;
   bson b = INIT_BSON;
+  int ret = MONGO_ERROR;
 
   bson_init(&query);
   bson_append_string_uppercase( &query, "filename", filename, gfs->caseInsensitive );
   bson_finish(&query);
   files = mongo_find(gfs->client, gfs->files_ns, &query, NULL, 0, 0, 0);
   bson_destroy(&query);
+
+  /* files should be a valid cursor even if the file doesn't exist */
+  if ( files == NULL ) return MONGO_ERROR; 
 
   /* Remove each file and it's chunks from files named filename */
   while (mongo_cursor_next(files) == MONGO_OK) {
@@ -382,9 +386,12 @@ MONGO_EXPORT void gridfs_remove_filename(gridfs *gfs, const char *filename) {
     bson_finish(&b);
     mongo_remove(gfs->client, gfs->chunks_ns, &b, NULL);
     bson_destroy(&b);
+
+    ret = MONGO_OK;
   }
 
   mongo_cursor_destroy(files);
+  return ret;
 }
 
 MONGO_EXPORT int gridfs_find_query( gridfs *gfs, const bson *query, gridfile *gfile ) {
@@ -415,9 +422,7 @@ MONGO_EXPORT int gridfs_find_query( gridfs *gfs, const bson *query, gridfile *gf
   }
 }
 
-MONGO_EXPORT int gridfs_find_filename(gridfs *gfs, const char *filename, gridfile *gfile)
-
- {
+MONGO_EXPORT int gridfs_find_filename(gridfs *gfs, const char *filename, gridfile *gfile){
   bson query = INIT_BSON;
   int i;
 
@@ -521,13 +526,13 @@ static void gridfile_init_flags(gridfile *gfile) {
   bson_iterator it = INIT_ITERATOR;
 
   if( bson_find(&it, gfile->meta, "flags") != BSON_EOO ) {
-    gfile->flags = (gridfs_offset)bson_iterator_int(&it);
+    gfile->flags = bson_iterator_int(&it);
   } else {
     gfile->flags = 0;
   }
 }
 
-MONGO_EXPORT void gridfile_writer_init(gridfile *gfile, gridfs *gfs, const char *remote_name, const char *content_type, int flags ) {
+MONGO_EXPORT int gridfile_writer_init(gridfile *gfile, gridfs *gfs, const char *remote_name, const char *content_type, int flags ) {
   gridfile tmpFile = INIT_GRIDFILE;
 
   gfile->gfs = gfs;
@@ -570,6 +575,8 @@ MONGO_EXPORT void gridfile_writer_init(gridfile *gfile, gridfs *gfs, const char 
   /* Let's pre-allocate DEFAULT_CHUNK_SIZE bytes into pending_data then we don't need to worry 
      about doing realloc everywhere we want use the pending_data buffer */
   gfile->pending_data = (char*) bson_malloc((int)gridfs_pending_data_size(gfile->flags));
+
+  return MONGO_OK;
 }
 
 MONGO_EXPORT void gridfile_destroy(gridfile *gfile) {
@@ -944,7 +951,7 @@ MONGO_EXPORT gridfs_offset gridfile_read(gridfile *gfile, gridfs_offset size, ch
 
   contentlength = gridfile_get_contentlength(gfile);
   chunksize = gridfile_get_chunksize(gfile);
-  size = (contentlength - gfile->pos < size) ? contentlength - gfile->pos: size;
+  size = MIN( contentlength - gfile->pos, size );
   bytes_left = size;
 
   first_chunk = (int)((gfile->pos) / chunksize);  
@@ -1040,8 +1047,8 @@ MONGO_EXPORT gridfs_offset gridfile_seek(gridfile *gfile, gridfs_offset offset) 
   gridfs_offset newPos;
 
   chunkSize = gridfile_get_chunksize( gfile );
-  length = gridfile_get_contentlength( gfile ); 
-  newPos = length < offset ? length : offset;  
+  length = gridfile_get_contentlength( gfile );
+  newPos = MIN( length, offset );
 
   /* If we are seeking to the next chunk or prior to the current chunks let's flush the pending chunk */
   if (gfile->pending_len && (newPos >= (gfile->chunk_num + 1) * chunkSize || newPos < gfile->chunk_num * chunkSize)) {
