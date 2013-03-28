@@ -931,7 +931,7 @@ MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
     data = mongo_data_append( data, ns, strlen( ns ) + 1 );
     mongo_data_append( data, bson->data, bson_size( bson ) );
 
-    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );    
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern ); 
 }
 
 MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
@@ -981,7 +981,7 @@ MONGO_EXPORT int mongo_insert_batch( mongo *conn, const char *ns,
         data = mongo_data_append( data, bsons[i]->data, bson_size( bsons[i] ) );
     }
 
-    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern ); 
 }
 
 MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
@@ -1022,7 +1022,7 @@ MONGO_EXPORT int mongo_update( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append( data, cond->data, bson_size( cond ) );
     mongo_data_append( data, op->data, bson_size( op ) );
 
-    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern ); 
 }
 
 MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
@@ -1061,7 +1061,7 @@ MONGO_EXPORT int mongo_remove( mongo *conn, const char *ns, const bson *cond,
     data = mongo_data_append32( data, &ZERO );
     mongo_data_append( data, cond->data, bson_size( cond ) );
 
-    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern );     
+    return mongo_message_send_and_check_write_concern( conn, ns, mm, write_concern ); 
 }
 
 
@@ -1606,7 +1606,7 @@ MONGO_EXPORT double mongo_count( mongo *conn, const char *db, const char *coll, 
 }
 
 MONGO_EXPORT int mongo_run_command( mongo *conn, const char *db, const bson *command,
-                                    bson *out ) {    
+                                    bson *out ) {
     bson response = INIT_BSON;    
     bson_iterator it;
     size_t sl = strlen( db );
