@@ -121,8 +121,8 @@ MONGO_EXPORT void gridfile_destroy( gridfile *gfile );
  *  +-+-+-+-  when using this function
  *
  */
-MONGO_EXPORT void gridfile_writer_init( gridfile *gfile, gridfs *gfs, const char *remote_name,
-                                        const char *content_type, int flags );
+MONGO_EXPORT int gridfile_writer_init( gridfile *gfile, gridfs *gfs, const char *remote_name,
+                                       const char *content_type, int flags );
 
 /**
  *  Write to a GridFS file incrementally. You can call this function any number
@@ -134,8 +134,7 @@ MONGO_EXPORT void gridfile_writer_init( gridfile *gfile, gridfs *gfs, const char
  *  @param length - Size of buffer with data to be written
  *  @return - Number of bytes written. If different from length assume somethind went wrong
  */
-MONGO_EXPORT gridfs_offset gridfile_write_buffer( gridfile *gfile, const char *data,
-        gridfs_offset length );
+MONGO_EXPORT gridfs_offset gridfile_write_buffer( gridfile *gfile, const char *data, gridfs_offset length );
 
 /**
  *  Signal that writing of this gridfile is complete by
@@ -174,10 +173,14 @@ MONGO_EXPORT int gridfs_store_file( gridfs *gfs, const char *filename,
 
 /**
  *  Removes the files referenced by filename from the db
+ *
  *  @param gfs - the working GridFS
  *  @param filename - the filename of the file/s to be removed
+ *
+ *  @return MONGO_OK if a matching file was removed, and MONGO_ERROR if
+ *    an error occurred or the file did not exist
  */
-MONGO_EXPORT void gridfs_remove_filename( gridfs *gfs, const char *filename );
+MONGO_EXPORT int gridfs_remove_filename( gridfs *gfs, const char *filename );
 
 /**
  *  Find the first file matching the provided query within the
@@ -390,7 +393,7 @@ MONGO_EXPORT gridfs_offset gridfile_write_file( gridfile *gfile, FILE *stream );
  *
  *  @return - the number of bytes read
  */
-MONGO_EXPORT gridfs_offset gridfile_read( gridfile *gfile, gridfs_offset size, char *buf );
+MONGO_EXPORT gridfs_offset gridfile_read_buffer( gridfile *gfile, char *buf, gridfs_offset size );
 
 /**
  *  Updates the position in the file
