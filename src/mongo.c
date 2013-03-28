@@ -65,7 +65,7 @@ MONGO_EXPORT const char* mongo_get_primary(mongo* conn) {
 }
 
 
-MONGO_EXPORT size_t mongo_get_socket(mongo* conn) {
+MONGO_EXPORT SOCKET mongo_get_socket(mongo* conn) {
     mongo* conn_ = (mongo*)conn;
     return conn_->sock;
 }
@@ -884,6 +884,7 @@ static int mongo_choose_write_concern( mongo *conn,
 /*********************************************************************
 CRUD API
 **********************************************************************/
+
 static int mongo_message_send_and_check_write_concern( mongo *conn, const char *ns, mongo_message *mm, mongo_write_concern *write_concern ) {
    if( write_concern ) {
         if( mongo_message_send( conn, mm ) == MONGO_ERROR ) {
@@ -895,7 +896,7 @@ static int mongo_message_send_and_check_write_concern( mongo *conn, const char *
     else {
         return mongo_message_send( conn, mm );
     }
-};
+}
 
 MONGO_EXPORT int mongo_insert( mongo *conn, const char *ns,
                                const bson *bson, mongo_write_concern *custom_write_concern ) {
@@ -1143,49 +1144,49 @@ MONGO_EXPORT void mongo_set_write_concern( mongo *conn,
 
 MONGO_EXPORT int mongo_write_concern_get_w( mongo_write_concern *write_concern ){    
     return write_concern->w;
-};
+}
 
 MONGO_EXPORT int mongo_write_concern_get_wtimeout( mongo_write_concern *write_concern ){    
     return write_concern->wtimeout;
-};
+}
 
 MONGO_EXPORT int mongo_write_concern_get_j( mongo_write_concern *write_concern ){    
     return write_concern->j;
-};
+}
 
 MONGO_EXPORT int mongo_write_concern_get_fsync( mongo_write_concern *write_concern ){    
     return write_concern->fsync;
-};
+}
 
 MONGO_EXPORT const char* mongo_write_concern_get_mode( mongo_write_concern *write_concern ){    
     return write_concern->mode;
-};
+}
 
 MONGO_EXPORT bson* mongo_write_concern_get_cmd( mongo_write_concern *write_concern ){    
     return write_concern->cmd;
-};
+}
 
 MONGO_EXPORT void mongo_write_concern_set_w( mongo_write_concern *write_concern, int w ){    
     write_concern->w = w;
-};
+}
 
 MONGO_EXPORT void mongo_write_concern_set_wtimeout( mongo_write_concern *write_concern, int wtimeout ){    
     write_concern->wtimeout = wtimeout;
 
-};
+}
 
 MONGO_EXPORT void mongo_write_concern_set_j( mongo_write_concern *write_concern, int j ){    
     write_concern->j = j;
-};
+}
 
 MONGO_EXPORT void mongo_write_concern_set_fsync( mongo_write_concern *write_concern, int fsync ){    
     write_concern->fsync = fsync;
 
-};
+}
 
 MONGO_EXPORT void mongo_write_concern_set_mode( mongo_write_concern *write_concern, const char* mode ){    
     write_concern->mode = mode;
-};
+}
 
 static int mongo_cursor_op_query( mongo_cursor *cursor ) {
     int res;
