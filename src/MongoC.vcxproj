@@ -345,9 +345,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="bcon.h" />
     <ClInclude Include="bson.h" />
     <ClInclude Include="encoding.h" />
