@@ -1319,7 +1319,7 @@ MONGO_EXPORT int mongo_find_one( mongo *conn, const char *ns, const bson *query,
     mongo_cursor_set_fields( cursor, fields );
     mongo_cursor_set_limit( cursor, 1 );
 
-    if( mongo_cursor_next( cursor ) != MONGO_OK ) errors_exists = 1;    
+    errors_exists = ( mongo_cursor_next( cursor ) != MONGO_OK );    
 
     if( !errors_exists && out && bson_copy( out, &cursor->current ) != MONGO_OK ) errors_exists = 1;           
 
