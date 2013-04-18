@@ -1,3 +1,6 @@
 [submodule "src/zlib"]
 	path = src/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "src/fast-aes"]
+	path = src/fast-aes
+	url = https://github.com/nateware/fast-aes.git
