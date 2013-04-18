@@ -19,6 +19,12 @@
     <Filter Include="Header Files\Zlib">
       <UniqueIdentifier>{7bf67cb3-c7ff-41fc-8ffa-6ea3c3da077e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\fast-aes">
+      <UniqueIdentifier>{33239d6d-b786-4f3e-86ad-c26e7058779a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fast-aes">
+      <UniqueIdentifier>{66a49ea3-2227-4ac2-b719-99bf45586ea9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -86,6 +92,9 @@
     </ClInclude>
     <ClInclude Include="bcon.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fast-aes\ext\rijndael-alg-fst.h">
+      <Filter>Header Files\fast-aes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +166,9 @@
     </ClCompile>
     <ClCompile Include="env.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fast-aes\ext\rijndael-alg-fst.c">
+      <Filter>Source Files\fast-aes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

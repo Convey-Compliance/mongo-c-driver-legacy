@@ -191,7 +191,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;NO_RUBY_FAST_AES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -235,7 +235,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;NO_RUBY_FAST_AES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -349,6 +349,7 @@
     <ClInclude Include="bson.h" />
     <ClInclude Include="encoding.h" />
     <ClInclude Include="env.h" />
+    <ClInclude Include="fast-aes\ext\rijndael-alg-fst.h" />
     <ClInclude Include="gridfs.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="mongo.h" />
@@ -383,6 +384,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">CompileAsC</CompileAs>
     </ClCompile>
     <ClCompile Include="env.c" />
+    <ClCompile Include="fast-aes\ext\rijndael-alg-fst.c" />
     <ClCompile Include="gridfs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">CompileAsC</CompileAs>
