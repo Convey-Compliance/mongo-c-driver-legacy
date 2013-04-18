@@ -1,0 +1,3 @@
+[submodule "srczlib"]
+	path = srczlib
+	url = https://github.com/madler/zlib.git
