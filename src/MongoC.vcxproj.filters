@@ -87,14 +87,14 @@
     <ClInclude Include="ZLib\zutil.h">
       <Filter>Header Files\Zlib</Filter>
     </ClInclude>
-    <ClInclude Include="prepostChunkProcessing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="bcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fast-aes\ext\rijndael-alg-fst.h">
       <Filter>Header Files\fast-aes</Filter>
+    </ClInclude>
+    <ClInclude Include="ZLib_AES_Filter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +158,6 @@
     <ClCompile Include="ZLib\uncompr.c">
       <Filter>Source Files\Zlib</Filter>
     </ClCompile>
-    <ClCompile Include="prepostChunkProcessing.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="bcon.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -169,6 +166,9 @@
     </ClCompile>
     <ClCompile Include="fast-aes\ext\rijndael-alg-fst.c">
       <Filter>Source Files\fast-aes</Filter>
+    </ClCompile>
+    <ClCompile Include="ZLib_AES_Filter.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

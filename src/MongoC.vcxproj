@@ -124,45 +124,49 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -354,7 +358,6 @@
     <ClInclude Include="md5.h" />
     <ClInclude Include="mongo.h" />
     <ClInclude Include="platform.h" />
-    <ClInclude Include="prepostChunkProcessing.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -368,6 +371,7 @@
     <ClInclude Include="ZLib\zconf.h" />
     <ClInclude Include="ZLib\zlib.h" />
     <ClInclude Include="ZLib\zutil.h" />
+    <ClInclude Include="ZLib_AES_Filter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bcon.c" />
@@ -436,7 +440,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MongoC.cpp" />
-    <ClCompile Include="prepostChunkProcessing.c" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">Create</PrecompiledHeader>
@@ -557,6 +560,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">Level3</WarningLevel>
     </ClCompile>
+    <ClCompile Include="ZLib_AES_Filter.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MongoC.rc" />
