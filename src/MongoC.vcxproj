@@ -124,45 +124,49 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>X:\Lib\MongoClient\src\ZLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -191,7 +195,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;NO_RUBY_FAST_AES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -235,7 +239,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;WIN32;_DEBUG;_WINDOWS;_USRDLL;MONGOC_EXPORTS;MONGO_USE__INT64;MONGO_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;MONGO_ZOMBIE_CHECK;MONGO_HAVE_STDINT;NO_RUBY_FAST_AES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -349,11 +353,11 @@
     <ClInclude Include="bson.h" />
     <ClInclude Include="encoding.h" />
     <ClInclude Include="env.h" />
+    <ClInclude Include="fast-aes\ext\rijndael-alg-fst.h" />
     <ClInclude Include="gridfs.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="mongo.h" />
     <ClInclude Include="platform.h" />
-    <ClInclude Include="prepostChunkProcessing.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -367,6 +371,7 @@
     <ClInclude Include="ZLib\zconf.h" />
     <ClInclude Include="ZLib\zlib.h" />
     <ClInclude Include="ZLib\zutil.h" />
+    <ClInclude Include="ZLib_AES_Filter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bcon.c" />
@@ -383,6 +388,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|x64'">CompileAsC</CompileAs>
     </ClCompile>
     <ClCompile Include="env.c" />
+    <ClCompile Include="fast-aes\ext\rijndael-alg-fst.c" />
     <ClCompile Include="gridfs.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">CompileAsC</CompileAs>
@@ -434,7 +440,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MongoC.cpp" />
-    <ClCompile Include="prepostChunkProcessing.c" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_Memory_Protection|Win32'">Create</PrecompiledHeader>
@@ -555,6 +560,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">Level3</WarningLevel>
     </ClCompile>
+    <ClCompile Include="ZLib_AES_Filter.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MongoC.rc" />
