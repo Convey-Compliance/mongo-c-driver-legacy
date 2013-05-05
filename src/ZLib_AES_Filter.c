@@ -93,17 +93,16 @@ static int Zlib_AES_PostProcessChunk(void* context, char** targetBuf, size_t* ta
   uLongf tmpLen = DEFAULT_CHUNK_SIZE + AES_BLOCK_SIZE; 
 
   ALIGN_TO_AES_BLOCK_SIZE( tmpLen ); /* Let's make sure we have enough space for AES decryption of full blocks */
-  if( flags & GRIDFILE_COMPRESS || flags & GRIDFILE_ENCRYPT ) {      
-    *targetBuf = bufferFromContext( context, tmpLen, flags ); 
+  if( flags & GRIDFILE_COMPRESS || flags & GRIDFILE_ENCRYPT ) {          
+    if( flags & GRIDFILE_COMPRESS ) *targetBuf = bufferFromContext( context, tmpLen, flags );
     if( flags & GRIDFILE_ENCRYPT ) {
       u8* target = (u8*)decryptBufferFromContext( context, tmpLen );
-      u8* source = (u8*)*targetBuf;
+      u8* source = (u8*)srcData;
       size_t n_loop = 0;
       size_t loops = srcLen / AES_BLOCK_SIZE; /* We KNOW the number of blocks is multiple of AES_BLOCK_SIZE */
       u32 rk[4 * (AES_128BITSKEY_ROUNDS + 1)];
       int r = rijndaelKeySetupDec( rk, (const u8*)CRYPTO_KEY( context ), AES_MONGO_KEY_SIZE ); 
-      
-      memmove( source, srcData, srcLen ); /* We need to move the source data to keep a copy to implement CBC decryption */      
+            
       while( n_loop < loops ) {
         rijndaelDecrypt( rk, r, source, target );                  
         if( n_loop++ > 0 ) XOR_AES_BLOCK( target, source - AES_BLOCK_SIZE ) /* CBC second block and on... */           
@@ -115,8 +114,8 @@ static int Zlib_AES_PostProcessChunk(void* context, char** targetBuf, size_t* ta
     }
     
     if( flags & GRIDFILE_COMPRESS ) {
-      Bytef* source = flags & GRIDFILE_ENCRYPT ? (Bytef*)DECRYPT_BUFFER(context) : (Bytef*)srcData;  
-      
+      Bytef* source = flags & GRIDFILE_ENCRYPT ? (Bytef*)DECRYPT_BUFFER(context) : (Bytef*)srcData;        
+       
       if (uncompress( (Bytef*)(*targetBuf), &tmpLen, source, (uLong)srcLen ) != Z_OK ) return -1;      
       *targetLen = (size_t)tmpLen;
     } else {
