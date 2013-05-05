@@ -171,6 +171,7 @@ static void ZLib_AES_reset_context(void* context, int flags){
   if( DECRYPT_BUFFER(context) ) {
     bson_free( DECRYPT_BUFFER(context) );
     DECRYPT_BUFFER(context) = NULL;
+    TARGET_DECRYPTBUFFER_SIZE(context) = 0;
   }
 }
 
