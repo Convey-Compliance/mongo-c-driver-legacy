@@ -42,19 +42,12 @@ MONGO_EXTERN_C_START
 
 #include "bson.h"
 
-#define GRIDFILE_COMPRESS 2
-#define GRIDFILE_ENCRYPT 4
+enum { GRIDFILE_COMPRESS = 2,
+       GRIDFILE_ENCRYPT = 4 };
 
-#define AES_BLOCK_SIZE 16
-#define AES_CRYPTO_KEY_SIZE 16
-
-typedef struct {
-  FILTER_CONTEXT_CALLBACKS; /* Base "Class" expansion */
-  void* targetBuffer; /* Special general purpose buffer, for Zlib and Decryption on certain cases */
-  size_t targetBuffer_size; /* Allocated buffer size */
-  void* targetDecryptBuffer; /* Dedicated buffer for decryption operations */ 
-  char crypto_key[AES_CRYPTO_KEY_SIZE]; /* AES 128bits Encryption vector */
-} ZLib_AES_filterContext;
+enum { AES_128 = 128, 
+       AES_192 = 192,
+       AES_256 = 256 };
 
 /**
  *  Use this function to initialize ZLib & AES filtering as default filtering schema.
@@ -77,10 +70,11 @@ MONGO_EXPORT void* create_ZLib_AES_filter_context( int flags );
 MONGO_EXPORT void destroy_ZLib_AES_filter_context( void* context, int flags );
 /**
  *  Initialized initial encryption vector with an MD5 hash obtained from the passphrase 
+ *  Returns 0 if everything went fine. Returns -1 if passed wrong bits parameter or if passphrase too short
  *  @param context - pointer to the ZlibAES filtering object
  *  @param passphrase - string used to create the initial encryption vector for AES algorihtm
  */
-MONGO_EXPORT void ZLib_AES_filter_context_set_encryption_key( void* context, const char* passphrase );
+MONGO_EXPORT int ZLib_AES_filter_context_set_encryption_key( void* context, const char* passphrase, int bits );
 
 MONGO_EXTERN_C_END
 #endif
