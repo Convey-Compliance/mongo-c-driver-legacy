@@ -76,7 +76,7 @@ static int Zlib_AES_PreProcessChunk(void* context, char** targetBuf, size_t* tar
       u8 lastBlockLen = tmpLen % AES_BLOCK_SIZE;
       int r = rijndaelKeySetupEnc( rk, (const u8*)CRYPTO_KEY( context ), KEY_BITS( context ) ); 
       
-      if( tmpLen > AES_BLOCK_SIZE ) { 
+      if( tmpLen >= AES_BLOCK_SIZE ) { 
         size_t loops = tmpLen / AES_BLOCK_SIZE;
 
         XOR_AES_BLOCK( target, CRYPTO_KEY( context ) ); /* Initial CBC step using initialization vector/crypto key */
@@ -91,7 +91,7 @@ static int Zlib_AES_PreProcessChunk(void* context, char** targetBuf, size_t* tar
         memmove( lastblock, target, lastBlockLen );
         lastblock[AES_BLOCK_SIZE - 1] = lastBlockLen;
       }
-      if( tmpLen > AES_BLOCK_SIZE ) XOR_AES_BLOCK( lastblock, target - AES_BLOCK_SIZE ) /* CBC last block with prior block before encrypting ONLY if source > AES block size*/
+      if( tmpLen >= AES_BLOCK_SIZE ) XOR_AES_BLOCK( lastblock, target - AES_BLOCK_SIZE ) /* CBC last block with prior block before encrypting ONLY if source >= AES block size*/
       else XOR_AES_BLOCK( lastblock, CRYPTO_KEY( context ) ); /* Otherwise CBC last block with initialization vector */
       rijndaelEncrypt( rk, r, lastblock, target ); 
       if( lastBlockLen == 0) tmpLen += AES_BLOCK_SIZE;
