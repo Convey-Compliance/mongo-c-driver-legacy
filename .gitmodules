@@ -1,6 +1,6 @@
 [submodule "src/zlib"]
 	path = src/zlib
-	url = https://github.com/madler/zlib.git
+	url = https://bucket.convey.com/Convey/github-zlib.git
 [submodule "src/fast-aes"]
 	path = src/fast-aes
-	url = https://github.com/Convey-Compliance/fast-aes.git
+	url = https://bucket.convey.com/Convey/fast-aes.git
