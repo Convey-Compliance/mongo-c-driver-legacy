@@ -11,6 +11,8 @@
 *.pyc
 *.swp
 .DS_Store
+.idea
+example_*
 test_*
 benchmark
 benchmark.exe
@@ -19,6 +21,8 @@ config.log
 docs/html
 docs/source/sphinx/build
 docs/source/doxygen
+# These files are creaed by test cases
+output
+input-file
+bigfile
 /BuildFiles/
-/error.log
-/Run/
