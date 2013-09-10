@@ -31,8 +31,9 @@ for i in `find . -name *_test`
 do
   if [ $valgrind -eq 1 ]
   then
-    echo valgrind $i
-    valgrind $i
+    CMD="valgrind --leak-check=full $i"
+    echo $CMD
+    $CMD
   else
     echo $i
     $i
