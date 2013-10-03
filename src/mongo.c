@@ -60,7 +60,8 @@ static const char* _get_host_port(mongo_host_port* hp) {
     return _hp;
 }
 
-/* Memory returned by this function must be freed */
+
+/* Memory returned by this function MUST be freed with bson_free */
 MONGO_EXPORT const char* mongo_get_primary(mongo* conn) {
     mongo* conn_ = (mongo*)conn;
     if( !(conn_->connected) || (conn_->primary->host[0] == '\0') )
@@ -86,7 +87,7 @@ MONGO_EXPORT int mongo_get_host_count(mongo* conn) {
 }
 
 
-/* Memory returned by this function must be freed */
+/* Memory returned by this function MUST be freed with bson_free */
 MONGO_EXPORT const char* mongo_get_host(mongo* conn, int i) {
     mongo_replica_set* r = conn->replica_set;
     mongo_host_port* hp;
@@ -398,8 +399,6 @@ static int mongo_check_is_master( mongo *conn ) {
     bson_bool_t ismaster = 0;
     int max_bson_size = MONGO_DEFAULT_MAX_BSON_SIZE;
 
-    out.data = NULL;
-
     if ( mongo_simple_int_command( conn, "admin", "ismaster", 1, &out ) != MONGO_OK )
         return MONGO_ERROR;
 
@@ -549,7 +548,6 @@ static void mongo_replica_set_check_seed( mongo *conn ) {
     const char *host_string;
     mongo_host_port *host_port = NULL;
 
-    out->data = NULL;
     if( mongo_simple_int_command( conn, "admin", "ismaster", 1, out ) == MONGO_OK ) {
 
         if( bson_find( it, out, "hosts" ) ) {
@@ -591,8 +589,6 @@ static int mongo_replica_set_check_host( mongo *conn ) {
     bson_bool_t ismaster = 0;
     const char *set_name;
     int max_bson_size = MONGO_DEFAULT_MAX_BSON_SIZE;
-
-    out->data = NULL;
 
     if ( mongo_simple_int_command( conn, "admin", "ismaster", 1, out ) == MONGO_OK ) {
         if( bson_find( it, out, "ismaster" ) )
@@ -664,7 +660,7 @@ MONGO_EXPORT int mongo_replica_set_client( mongo *conn ) {
                 /* Primary found, so return. */
                 else if( conn->replica_set->primary_connected ) {
                     bson_free( conn->primary );
-                    conn->primary = bson_malloc( sizeof( mongo_host_port ) );                                        
+                    conn->primary = bson_malloc( sizeof( mongo_host_port ) );
                     snprintf( conn->primary->host, MAXHOSTNAMELEN, "%s", node->host );
                     conn->primary->port = node->port;
                     return MONGO_OK;
@@ -1369,10 +1365,11 @@ MONGO_EXPORT const bson *mongo_cursor_bson( mongo_cursor *cursor ) {
 MONGO_EXPORT int mongo_cursor_next( mongo_cursor *cursor ) {
     char *next_object;
     char *message_end;
+    int already_sent = ( cursor->flags & MONGO_CURSOR_QUERY_SENT ) == MONGO_CURSOR_QUERY_SENT;
 
     if( cursor == NULL ) return MONGO_ERROR;
 
-    if( ! ( cursor->flags & MONGO_CURSOR_QUERY_SENT ) )
+    if( ! already_sent )
         if( mongo_cursor_op_query( cursor ) != MONGO_OK )
             return MONGO_ERROR;
 
@@ -1391,7 +1388,10 @@ MONGO_EXPORT int mongo_cursor_next( mongo_cursor *cursor ) {
         }
 
         else {
-            cursor->err = MONGO_CURSOR_INVALID;
+            if( already_sent ) {
+                cursor->err = MONGO_CURSOR_INVALID;
+            }
+            /* else preserve the MONGO_CURSOR_EXHAUSTED error flag set by mongo_cursor_get_more */
             return MONGO_ERROR;
         }
     }
