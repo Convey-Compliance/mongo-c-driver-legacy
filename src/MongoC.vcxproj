@@ -147,7 +147,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>..\intermediate\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|Win32'">
@@ -159,7 +159,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\BuildFiles\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>..\intermediate\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir)\fast-aes\ext;$(ProjectDir)\ZLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Memory_Protection|x64'">
