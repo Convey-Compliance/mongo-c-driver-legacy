@@ -4,3 +4,6 @@
 [submodule "src/fast-aes"]
 	path = src/fast-aes
 	url = https://bucket.convey.com/Convey/fast-aes.git
+[submodule "__submodules/fast-aes"]
+	path = __submodules/fast-aes
+	url = https://github.com/Convey-Compliance/fast-aes.git
