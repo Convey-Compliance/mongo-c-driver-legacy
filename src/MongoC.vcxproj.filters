@@ -90,11 +90,11 @@
     <ClInclude Include="bcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fast-aes\ext\rijndael-alg-fst.h">
-      <Filter>Header Files\fast-aes</Filter>
-    </ClInclude>
     <ClInclude Include="ZLib_AES_Filter.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\fast-aes\ext\rijndael-alg-fst.h">
+      <Filter>Header Files\fast-aes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -164,11 +164,11 @@
     <ClCompile Include="env.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fast-aes\ext\rijndael-alg-fst.c">
-      <Filter>Source Files\fast-aes</Filter>
-    </ClCompile>
     <ClCompile Include="ZLib_AES_Filter.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\fast-aes\ext\rijndael-alg-fst.c">
+      <Filter>Source Files\fast-aes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
