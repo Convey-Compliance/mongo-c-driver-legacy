@@ -7,3 +7,6 @@
 [submodule "__submodules/fast-aes"]
 	path = __submodules/fast-aes
 	url = https://github.com/Convey-Compliance/fast-aes.git
+[submodule "__submodules/zlib"]
+	path = __submodules/zlib
+	url = https://github.com/Convey-Compliance/zlib.git
