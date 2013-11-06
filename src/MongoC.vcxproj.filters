@@ -57,36 +57,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ZLib\crc32.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\deflate.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\inffast.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\inffixed.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\inflate.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\inftrees.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\trees.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\zconf.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\zlib.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="ZLib\zutil.h">
-      <Filter>Header Files\Zlib</Filter>
-    </ClInclude>
     <ClInclude Include="bcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -95,6 +65,39 @@
     </ClInclude>
     <ClInclude Include="..\__submodules\fast-aes\ext\rijndael-alg-fst.h">
       <Filter>Header Files\fast-aes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\crc32.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\deflate.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\gzguts.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\inffast.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\inffixed.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\inflate.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\inftrees.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\trees.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\zconf.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\zlib.h">
+      <Filter>Header Files\Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\__submodules\zlib\zutil.h">
+      <Filter>Header Files\Zlib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -125,39 +128,6 @@
     <ClCompile Include="numbers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ZLib\adler32.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\compress.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\crc32.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\deflate.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\infback.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\inffast.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\inflate.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\inftrees.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\zutil.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\trees.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="ZLib\uncompr.c">
-      <Filter>Source Files\Zlib</Filter>
-    </ClCompile>
     <ClCompile Include="bcon.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -169,6 +139,39 @@
     </ClCompile>
     <ClCompile Include="..\__submodules\fast-aes\ext\rijndael-alg-fst.c">
       <Filter>Source Files\fast-aes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\adler32.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\compress.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\crc32.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\deflate.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\infback.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\inffast.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\inflate.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\inftrees.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\trees.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\uncompr.c">
+      <Filter>Source Files\Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\__submodules\zlib\zutil.c">
+      <Filter>Source Files\Zlib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
