@@ -1266,7 +1266,11 @@ static int mongo_cursor_get_more( mongo_cursor *cursor ) {
         data = mongo_data_append32( data, &limit );
         mongo_data_append64( data, &cursor->reply->fields.cursorID );
 
-        bson_free( cursor->reply );
+        if( cursor->reply )
+        {
+          bson_free( cursor->reply );
+          cursor->reply = NULL;
+        }
         res = mongo_message_send( cursor->conn, mm );
         if( res != MONGO_OK ) {
             /* Commented destruction of cursor if it fails on attempt to retrieve more. User of the cursor "on the other side"
@@ -1453,7 +1457,7 @@ MONGO_EXPORT int mongo_cursor_destroy( mongo_cursor *cursor ) {
         result = mongo_message_send( conn, mm );
     }
 
-    bson_free( cursor->reply );
+    if( cursor->reply ) bson_free( cursor->reply );
     bson_free( ( void * )cursor->ns );
 
     if( cursor->flags & MONGO_CURSOR_MUST_FREE )
