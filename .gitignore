@@ -1,4 +1,6 @@
-
+/intermediate/
+/bin/
+*.dll
 *~
 *.o
 *.os
@@ -25,5 +27,8 @@ docs/source/doxygen
 output
 input-file
 bigfile
-/BuildFiles/
-/Run/
+*.suo
+*.sdf
+*.opensdf
+*.cache
+*.user
