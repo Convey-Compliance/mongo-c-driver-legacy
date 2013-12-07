@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\src\gridfs.h" />
     <ClInclude Include="..\..\src\md5.h" />
     <ClInclude Include="..\..\src\mongo.h" />
+    <ClInclude Include="..\..\src\spin_lock.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -104,6 +105,7 @@
     <ClCompile Include="..\..\src\md5.c" />
     <ClCompile Include="..\..\src\mongo.c" />
     <ClCompile Include="..\..\src\numbers.c" />
+    <ClCompile Include="..\..\src\spin_lock.c" />
     <ClCompile Include="..\..\test\connectionpool_test.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

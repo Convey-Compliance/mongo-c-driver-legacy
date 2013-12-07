@@ -54,6 +54,9 @@
     <ClInclude Include="..\..\src\connection_pool.h">
       <Filter>Header Files\Mongo_Client</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\spin_lock.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bson.c">
@@ -82,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="..\..\test\connectionpool_test.c">
       <Filter>Source Files\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\spin_lock.c">
+      <Filter>Source Files\Mongo_Client</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
