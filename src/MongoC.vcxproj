@@ -203,6 +203,7 @@
     <ClInclude Include="mongo.h" />
     <ClInclude Include="platform.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="spin_lock.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ZLib_AES_Filter.h" />
@@ -266,6 +267,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MongoC.cpp" />
+    <ClCompile Include="spin_lock.c" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
