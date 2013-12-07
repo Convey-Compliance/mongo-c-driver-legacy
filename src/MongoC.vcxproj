@@ -195,6 +195,7 @@
     <ClInclude Include="..\..\zlib\zutil.h" />
     <ClInclude Include="bcon.h" />
     <ClInclude Include="bson.h" />
+    <ClInclude Include="connection_pool.h" />
     <ClInclude Include="encoding.h" />
     <ClInclude Include="env.h" />
     <ClInclude Include="gridfs.h" />
@@ -228,6 +229,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
     </ClCompile>
+    <ClCompile Include="connection_pool.c" />
     <ClCompile Include="encoding.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
