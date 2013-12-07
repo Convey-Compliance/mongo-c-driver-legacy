@@ -39,12 +39,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\Src\;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\fast-aes\ext;..\..\..\ZLib;..\..\src;$(IncludePath)</IncludePath>
+    <OutDir>..\..\..\..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\..\..\intermediate\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\..\intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>..\..\..\..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\..\..\intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>..\..\..\fast-aes\ext;..\..\..\ZLib;..\..\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -83,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\bson.h" />
+    <ClInclude Include="..\..\src\connection_pool.h" />
     <ClInclude Include="..\..\src\encoding.h" />
     <ClInclude Include="..\..\src\env.h" />
     <ClInclude Include="..\..\src\gridfs.h" />
@@ -93,13 +97,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\bson.c" />
+    <ClCompile Include="..\..\src\connection_pool.c" />
     <ClCompile Include="..\..\src\encoding.c" />
     <ClCompile Include="..\..\src\env.c" />
     <ClCompile Include="..\..\src\gridfs.c" />
     <ClCompile Include="..\..\src\md5.c" />
     <ClCompile Include="..\..\src\mongo.c" />
     <ClCompile Include="..\..\src\numbers.c" />
-    <ClCompile Include="..\..\test\gridfs_test.c" />
+    <ClCompile Include="..\..\test\connectionpool_test.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

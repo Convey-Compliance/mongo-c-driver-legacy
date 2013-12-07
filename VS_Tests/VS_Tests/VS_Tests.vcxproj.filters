@@ -51,11 +51,11 @@
     <ClInclude Include="..\..\src\mongo.h">
       <Filter>Header Files\Mongo_Client</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\connection_pool.h">
+      <Filter>Header Files\Mongo_Client</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\gridfs_test.c">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\bson.c">
       <Filter>Source Files\Mongo_Client</Filter>
     </ClCompile>
@@ -76,6 +76,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\numbers.c">
       <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\connection_pool.c">
+      <Filter>Source Files\Mongo_Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\connectionpool_test.c">
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
