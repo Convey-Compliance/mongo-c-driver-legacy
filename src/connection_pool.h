@@ -11,9 +11,6 @@
 #define MAX_DB_LEN 256
 #define MAX_REPLICA_NAME_LEN 256
 
-#define CONNECTION_POOL_MUTEX_NAME "mongo_connection_pool"
-#define DICTIONARY_MUTEX_NAME "mongo_connection_dictionary"
-
 typedef enum mongo_connection_error_t {
     MONGO_CONNECTION_SUCCESS = 0,       /**< Connection success! */
     MONGO_INVALID_CONNECTION_STRING     /**< Connection string is invalid */
@@ -28,14 +25,14 @@ typedef struct mongo_connection {
 
 typedef struct mongo_connection_pool {
     char *cs;                             /**< connection string, see http://docs.mongodb.org/manual/reference/connection-string/ note: only replicaSet option is supported */
-    HANDLE lock;                          /**< mutex on windows */
+    LONG lock;                          /**< mutex on windows */
     mongo_connection *head;               /**< first connection in the pool */
     struct mongo_connection_pool *next;   /**< next pool in dictionary */
 } mongo_connection_pool;
 
 typedef struct mongo_connection_dictionary {
     mongo_connection_pool *head;        /**< first pool in dictionary */
-    HANDLE lock;                        /**< mutex on windows */
+    LONG lock;                        /**< mutex on windows */
 } mongo_connection_dictionary;
 
 /**
