@@ -1,10 +1,5 @@
 #include "mongo.h"
-
-#ifdef _MSC_VER
-  #include <windows.h>
-#else 
-  #include <pthread.h>
-#endif 
+#include "spin_lock.h"
 
 #define MAX_USER_LEN 256
 #define MAX_PASS_LEN 256
@@ -25,14 +20,14 @@ typedef struct mongo_connection {
 
 typedef struct mongo_connection_pool {
     char *cs;                             /**< connection string, see http://docs.mongodb.org/manual/reference/connection-string/ note: only replicaSet option is supported */
-    LONG lock;                          /**< mutex on windows */
+    spin_lock lock;                          /**< mutex on windows */
     mongo_connection *head;               /**< first connection in the pool */
     struct mongo_connection_pool *next;   /**< next pool in dictionary */
 } mongo_connection_pool;
 
 typedef struct mongo_connection_dictionary {
     mongo_connection_pool *head;        /**< first pool in dictionary */
-    LONG lock;                        /**< mutex on windows */
+    spin_lock lock;                        /**< mutex on windows */
 } mongo_connection_dictionary;
 
 /**

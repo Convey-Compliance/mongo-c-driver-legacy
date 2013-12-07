@@ -1,30 +1,5 @@
 #include "connection_pool.h"
 
-#define SPINLOCK_LOCKED 1
-#define SPINLOCK_UNLOCKED 0
-#define SPINS_BETWEEN_THREADSWITCH 1000
-
-static void spin( int *spinCount ) {
-  if( (*spinCount)++ > SPINS_BETWEEN_THREADSWITCH ) {
-    SwitchToThread();
-    *spinCount = 0;
-  }
-}
-
-static void spinLock( LONG *lock ) {
-  int spins = 0;
-  while ( InterlockedCompareExchange( lock, SPINLOCK_LOCKED, SPINLOCK_UNLOCKED ) != SPINLOCK_UNLOCKED ) {
-    spin( &spins );  
-  };
-}
-
-static void spinUnlock( LONG *lock ) {
-  int spins = 0;
-  while ( InterlockedCompareExchange( lock, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) != SPINLOCK_LOCKED ) {
-    spin( &spins );
-  };
-}
-
 static int connectToReplicaSet( mongo *conn, const char *replicaName, char *hosts ) {
   char *hostPortPair = strtok( hosts, "," ), host[MAXHOSTNAMELEN];
   int port = MONGO_DEFAULT_PORT;
@@ -56,7 +31,8 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
   char *hosts = ( char* )malloc( sizeof(char) * strlen( conn->pool->cs ) ), replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
 
   sscanf( conn->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
-  if( needToAuth = strchr( hosts, '@' ) != NULL)
+  needToAuth = (strchr( hosts, '@' ) != NULL); /* Moved out of conditional to avoid MSVC warnings... bummer */
+  if( needToAuth )
   {
     /* remove user and pass */
     strcpy( hosts, strchr( hosts, '@' ) + 1 );
@@ -104,11 +80,11 @@ MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn ) {
 static mongo_connection* removeFirst( mongo_connection_pool *pool ) {
   mongo_connection *res = pool->head;
 
-  spinLock( &pool->lock );
+  spinLock_lock( &pool->lock );
 
   pool->head = pool->head->next;
 
-  spinUnlock( &pool->lock );  
+  spinlock_unlock( &pool->lock );  
 
   return res;
 }
@@ -129,23 +105,23 @@ MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_p
 }
 
 MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *pool, mongo_connection *conn ) {
-  spinLock( &pool->lock );
+  spinLock_lock( &pool->lock );
 
   /* insert at the beginning of the pool */
   conn->next = pool->head;
   pool->head = conn;
 
-  spinUnlock( &pool->lock );  
+  spinlock_unlock( &pool->lock );  
 }
 
 MONGO_EXPORT void mongo_connection_dictionary_init( mongo_connection_dictionary *dict ) {
   dict->head = NULL;
-  dict->lock = 0;
+  spinLock_init( &dict->lock );  
 }
 
 static void addToDictionary( mongo_connection_dictionary *dict, mongo_connection_pool *pool, mongo_connection_pool *lastPoolInDict ) 
 {   
-  spinLock( &(dict->lock) );    
+  spinLock_lock( &(dict->lock) );    
 
   /* insert at the end of dictionary */
   if( dict->head == NULL )
@@ -153,7 +129,7 @@ static void addToDictionary( mongo_connection_dictionary *dict, mongo_connection
   else
     lastPoolInDict->next = pool;
 
-  spinUnlock( &(dict->lock) );
+  spinlock_unlock( &(dict->lock) );
 }
 
 MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *dict, char *cs ) {
@@ -171,8 +147,8 @@ MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_
     pool = ( mongo_connection_pool* )bson_malloc( sizeof( mongo_connection_pool ) );
     pool->head = NULL;
     pool->cs = cs;
-    pool->next = NULL;
-    pool->lock = 0;
+    pool->next = NULL;    
+    spinLock_init( &pool->lock );
 
     addToDictionary( dict, pool, lastPoolInDict );
   }
