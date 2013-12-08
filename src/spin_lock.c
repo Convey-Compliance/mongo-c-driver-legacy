@@ -12,7 +12,7 @@ static void spin( int *spinCount ) {
 }
 
 void spinLock_init( spin_lock *_this ){
-  (*_this) = 0; /* Start unlocked */
+  (*_this) = SPINLOCK_UNLOCKED; /* Start unlocked */
 }
 
 void spinLock_done( spin_lock *_this ){
@@ -20,16 +20,17 @@ void spinLock_done( spin_lock *_this ){
      that requires some kind of finalization */
 }
 
-void spinLock_lock( spin_lock *_this ) {
+static void spinLock_exchg_locking( spin_lock *_this, LONG originalValue, LONG exchgValue ) {
   int spins = 0;
-  while ( InterlockedCompareExchange( _this, SPINLOCK_LOCKED, SPINLOCK_UNLOCKED ) != SPINLOCK_UNLOCKED ) {
+  while ( InterlockedCompareExchange( _this, exchgValue, originalValue ) != originalValue ) {
     spin( &spins );  
   };
 }
 
+void spinLock_lock( spin_lock *_this ) {
+  spinLock_exchg_locking( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ); 
+}
+
 void spinlock_unlock( spin_lock *_this ) {
-  int spins = 0;
-  while ( InterlockedCompareExchange( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) != SPINLOCK_LOCKED ) {
-    spin( &spins );
-  };
+  spinLock_exchg_locking( _this, SPINLOCK_LOCKED, SPINLOCK_UNLOCKED ); 
 }
