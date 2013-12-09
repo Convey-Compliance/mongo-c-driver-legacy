@@ -162,7 +162,7 @@ env.Append( CPPPATH=["src/"] )
 env.Append( CPPFLAGS=" -DMONGO_DLL_BUILD" )
 coreFiles = ["src/md5.c" ]
 mFiles = [ "src/mongo.c", NET_LIB, "src/gridfs.c"]
-bFiles = [ "src/bcon.c", "src/bson.c", "src/numbers.c", "src/encoding.c"]
+bFiles = [ "src/bcon.c", "src/bson.c", "src/numbers.c", "src/encoding.c", "src/spin_lock.c", "src/connection_pool.c"]
 
 mHeaders = ["src/mongo.h"]
 bHeaders = ["src/bson.h", "src/bcon.h"]
@@ -280,7 +280,7 @@ def run_tests( root, tests, env, alias ):
         AlwaysBuild(test_alias)
 
 tests = Split("write_concern commands sizes resize endian_swap bson_alloc bson bson_subobject simple update errors "
-"count_delete auth gridfs validate examples helpers oid functions cursors")
+"count_delete auth gridfs validate examples helpers oid functions cursors connectionpool")
 if os.sys.platform != 'win32':
     tests.append("bcon")
 tests += PLATFORM_TESTS

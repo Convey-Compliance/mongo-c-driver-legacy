@@ -4,9 +4,25 @@
 #define SPINLOCK_UNLOCKED 0
 #define SPINS_BETWEEN_THREADSWITCH 1000
 
+static long crossSwap( spin_lock *_this, long originalValue, long exchgValue ) {
+  #ifdef _MSC_VER
+  return InterlockedCompareExchange( _this, exchgValue, originalValue );
+  #else
+  return __sync_val_compare_and_swap( _this, originalValue, exchgValue );
+  #endif
+}
+
+static void crossYield( void ) {
+  #ifdef _MSC_VER
+  SwitchToThread();
+  #else
+  sched_yield();
+  #endif
+}
+
 static void spin( int *spinCount ) {
   if( (*spinCount)++ > SPINS_BETWEEN_THREADSWITCH ) {
-    SwitchToThread();
+    crossYield();
     *spinCount = 0;
   }
 }
@@ -20,9 +36,9 @@ void spinLock_destroy( spin_lock *_this ){
      that requires some kind of finalization */
 }
 
-static void spinLock_exchg_locking( spin_lock *_this, LONG originalValue, LONG exchgValue ) {
+static void spinLock_exchg_locking( spin_lock *_this, long originalValue, long exchgValue ) {
   int spins = 0;
-  while ( InterlockedCompareExchange( _this, exchgValue, originalValue ) != originalValue ) {
+  while( crossSwap( _this, exchgValue, originalValue ) != originalValue ) {
     spin( &spins );  
   };
 }
