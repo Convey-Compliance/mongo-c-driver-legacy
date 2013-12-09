@@ -28,7 +28,7 @@ static int authenticate( mongo_connection *conn, const char *connectionString ) 
 
 MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
   int multipleHostsProvided, needToAuth, res;
-  char *hosts = ( char* )malloc( sizeof(char) * strlen( conn->pool->cs ) ), replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
+  char *hosts = ( char* )bson_malloc( sizeof(char) * strlen( conn->pool->cs ) ), replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
 
   sscanf( conn->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
   needToAuth = (strchr( hosts, '@' ) != NULL); /* Moved out of conditional to avoid MSVC warnings... bummer */
@@ -65,7 +65,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
       res = authenticate( conn, conn->pool->cs );
   } while( 0 );
 
-  free( hosts );
+  bson_free( hosts );
   return res;
 }
 
