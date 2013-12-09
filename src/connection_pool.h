@@ -82,6 +82,14 @@ MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *pool, mo
 MONGO_EXPORT void mongo_connection_dictionary_init( mongo_connection_dictionary *dict );
 
 /**
+ * Close any existing connection to the server and free all allocated
+ * memory associated with the dict object
+ *
+ * @param dict dictionary of connection pools
+ */
+MONGO_EXPORT void mongo_connection_dictionary_destroy( mongo_connection_dictionary *dict );
+
+/**
  * get pool by connection string or create new one(will be added to dictionary)
  *
  * @param dict dictionary of connection pools(one for each connection string)
