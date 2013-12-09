@@ -64,7 +64,7 @@ MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn );
  *
  * @param pool connection pool to get connection from
  *
- * @return connection
+ * @return connection already connected. Not need to call mongo_connection_connect()
  * note: connection could be not connected(check errors)
  */
 MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *pool );
