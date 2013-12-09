@@ -14,26 +14,37 @@ static int connectToReplicaSet( mongo *conn, const char *replicaName, char *host
   return mongo_replica_set_client( conn );
 }
 
-static int authenticate( mongo_connection *conn, const char *connectionString ) {
+/* mongo_connection methods */
+
+static mongo_connection* mongo_connection_new() {
+  return ( mongo_connection* )bson_malloc( sizeof( mongo_connection ) );
+}
+
+static void mongo_connection_delete( mongo_connection* _this ) {
+  mongo_destroy( _this->conn );
+  bson_free( _this );
+}
+
+static int mongo_connection_authenticate( mongo_connection *_this, const char *connectionString ) {
   char user[MAX_USER_LEN] = {'\0'}, pass[MAX_PASS_LEN] = {'\0'}, db[MAX_DB_LEN] = {'\0'};
   int credentialsScanned = sscanf( connectionString, "mongodb://%[^:]:%[^@]@%*[^/]/%[^?]?", user, pass, db );
 
   if( credentialsScanned != 3 ) {
     /* not all of required credentials exists */
-    conn->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
+    _this->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
     return MONGO_ERROR;
   }
-  return mongo_cmd_authenticate( conn->conn, db, user, pass );
+  return mongo_cmd_authenticate( _this->conn, db, user, pass );
 }
 
-MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
+MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
   int multipleHostsProvided, needToAuth, res;
   char *hosts, replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
 
-  if( conn->conn->connected == 1 ) return MONGO_OK;
+  if( _this->conn->connected == 1 ) return MONGO_OK;
   
-  hosts = ( char* )bson_malloc( sizeof(char) * strlen( conn->pool->cs ) );
-  sscanf( conn->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
+  hosts = ( char* )bson_malloc( sizeof(char) * strlen( _this->pool->cs ) );
+  sscanf( _this->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
   needToAuth = (strchr( hosts, '@' ) != NULL); /* Moved out of conditional to avoid MSVC warnings... bummer */
   if( needToAuth )
   {
@@ -46,7 +57,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
     if( hosts[0] == '\0' || /* required */
       ( multipleHostsProvided && replicaName[0] == '\0' )) /* replica set name required if multiple hosts specified */
     {
-      conn->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
+      _this->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
       res = MONGO_ERROR;
       break;
     }
@@ -58,54 +69,36 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
       int port = MONGO_DEFAULT_PORT;
 
       sscanf( hosts, "%[^:]:%d", host, &port );
-      res = mongo_client( conn->conn, host, port );
+      res = mongo_client( _this->conn, host, port );
     }
     else
     {
-      res = connectToReplicaSet( conn->conn, replicaName, hosts );
+      res = connectToReplicaSet( _this->conn, replicaName, hosts );
     }
     if( res == MONGO_ERROR )
-      conn->err = MONGO_CONNECTION_MONGO_ERROR;
+      _this->err = MONGO_CONNECTION_MONGO_ERROR;
     else if( needToAuth )
-      res = authenticate( conn, conn->pool->cs );
+      res = mongo_connection_authenticate( _this, _this->pool->cs );
   } while( 0 );
 
   bson_free( hosts );
   return res;
 }
 
-MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *conn ) {
-  return mongo_reconnect( conn->conn ) == MONGO_OK && authenticate( conn, conn->pool->cs ) == MONGO_OK ? MONGO_OK : MONGO_ERROR;
+MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *_this ) {
+  return mongo_reconnect( _this->conn ) == MONGO_OK && mongo_connection_authenticate( _this, _this->pool->cs ) == MONGO_OK ? MONGO_OK : MONGO_ERROR;
 }
 
-MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn ) {
-  mongo_disconnect( conn->conn );
+MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *_this ) {
+  mongo_disconnect( _this->conn );
 }
 
-static mongo_connection* removeFirst( mongo_connection_pool *pool ) {
-  mongo_connection *res = pool->head;
-
-  spinLock_lock( &pool->lock );
-
-  pool->head = pool->head->next;
-
-  spinlock_unlock( &pool->lock );  
-
-  return res;
-}
-
-static mongo_connection* mongo_connection_new() {
-  return ( mongo_connection* )bson_malloc( sizeof( mongo_connection ) );
-}
-
-static void mongo_connection_delete( mongo_connection* _this ) {
-  mongo_destroy( _this->conn );
-  bson_free( _this );
-}
+/* mongo_connection_pool methods */
 
 static mongo_connection_pool* mongo_connection_pool_new( const char *cs ) {
   mongo_connection_pool *pool = ( mongo_connection_pool* )bson_malloc( sizeof( mongo_connection_pool ) );
   pool->cs = ( char* )bson_malloc( sizeof( char ) * strlen( cs ) + 1 );
+  spinLock_init( &pool->lock );
   strcpy( pool->cs, cs );
   return pool;
 }
@@ -118,69 +111,86 @@ static void mongo_connection_pool_delete( mongo_connection_pool *_this ) {
     conn = next;
   }
   bson_free( _this->cs );
+  spinLock_destroy( &_this->lock );
   bson_free( _this );
 }
 
-MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *pool ) {
+static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_pool *_this ) {
+  mongo_connection *res = _this->head;
+
+  spinLock_lock( &_this->lock );
+
+  _this->head = _this->head->next;
+
+  spinlock_unlock( &_this->lock );  
+
+  return res;
+}
+
+MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *_this ) {
   mongo_connection *res;
-  if( pool->head == NULL ) {
+  if( _this->head == NULL ) {
     /* create new connection */
     res = mongo_connection_new();
-    res->pool = pool;
+    res->pool = _this;
     res->err = MONGO_CONNECTION_SUCCESS;
     mongo_connection_connect( res );
   } else /* return first from pool */
-    res = removeFirst( pool );
+    res = mongo_connection_pool_removeFirst( _this );
 
   res->next = NULL;
   return res;
 }
 
-MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *pool, mongo_connection *conn ) {
-  spinLock_lock( &pool->lock );
+MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *_this, mongo_connection *conn ) {
+  spinLock_lock( &_this->lock );
 
   /* insert at the beginning of the pool */
-  conn->next = pool->head;
-  pool->head = conn;
+  conn->next = _this->head;
+  _this->head = conn;
 
-  spinlock_unlock( &pool->lock );  
+  spinlock_unlock( &_this->lock );  
 }
 
-MONGO_EXPORT void mongo_connection_dictionary_init( mongo_connection_dictionary *dict ) {
-  dict->head = NULL;
-  spinLock_init( &dict->lock );  
+/* mongo_connection_dictionary methods */
+
+MONGO_EXPORT void mongo_connection_dictionary_init( mongo_connection_dictionary *_this ) {
+  _this->head = NULL;
+  spinLock_init( &_this->lock );  
 }
 
-MONGO_EXPORT void mongo_connection_dictionary_destroy( mongo_connection_dictionary *dict ) {
-  mongo_connection_pool *pool = dict->head;
+MONGO_EXPORT void mongo_connection_dictionary_destroy( mongo_connection_dictionary *_this ) {
+  mongo_connection_pool *pool = _this->head;
   while( pool != NULL ) {
     mongo_connection_pool *next = pool->next;
     mongo_connection_pool_delete( pool );
     pool = next;
   }
+  spinLock_destroy( &_this->lock );
 }
 
-static void addToDictionary( mongo_connection_dictionary *dict, mongo_connection_pool *pool, mongo_connection_pool *lastPoolInDict ) 
-{   
-  spinLock_lock( &(dict->lock) );    
-
+static void mongo_connection_dictionary_addToDictionary( mongo_connection_dictionary *_this, mongo_connection_pool *pool, mongo_connection_pool *lastPoolInDict ) 
+{
   /* insert at the end of dictionary */
-  if( dict->head == NULL )
-    dict->head = pool;
+  if( _this->head == NULL )
+    _this->head = pool;
   else
-    lastPoolInDict->next = pool;
-
-  spinlock_unlock( &(dict->lock) );
+    lastPoolInDict->next = pool;  
 }
 
-MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *dict, const char *cs ) {
-  mongo_connection_pool *pool = dict->head, *lastPoolInDict = pool;
+MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *_this, const char *cs ) {
+  mongo_connection_pool *pool, *lastPoolInDict = NULL;
+
+  /* Let's lock for the whole process of obtaining a pool and adding a new pool to the dictionary. The assumption is that this method
+     is not going to be called very often, therefore we can assume low contention. 
+     If we use a finer lock only when adding to dictionary we risk adding same pool twice. If this proves troublesome due to high 
+     contention we can change logic to finer lock inside adding to dictionary only or coarse critical section based locking */
+  spinLock_lock( &_this->lock );    
 
   /* find in dictionary by connection string */
-  while( pool != NULL ) {
+  for( pool = _this->head; pool != NULL; pool = pool->next ) {
     lastPoolInDict = pool;
-    if( strcmp( cs, pool->cs ) == 0 ) break; /* found */
-    pool = pool->next;
+    if( strcmp( cs, pool->cs ) == 0 ) break; /* found */    
   }
 
   if( pool == NULL ) {
@@ -188,10 +198,11 @@ MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_
     pool = mongo_connection_pool_new( cs );
     pool->head = NULL;
     pool->next = NULL;    
-    spinLock_init( &pool->lock );
 
-    addToDictionary( dict, pool, lastPoolInDict );
+    mongo_connection_dictionary_addToDictionary( _this, pool, lastPoolInDict );
   }
+
+  spinlock_unlock( &_this->lock );
 
   return pool;
 }
