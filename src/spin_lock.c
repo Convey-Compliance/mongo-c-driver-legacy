@@ -15,7 +15,7 @@ void spinLock_init( spin_lock *_this ){
   (*_this) = SPINLOCK_UNLOCKED; /* Start unlocked */
 }
 
-void spinLock_done( spin_lock *_this ){
+void spinLock_destroy( spin_lock *_this ){
   /* Empty function, in the future can be used if spin_lock becomes a more complex type
      that requires some kind of finalization */
 }
