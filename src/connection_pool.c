@@ -20,7 +20,7 @@ static int authenticate( mongo_connection *conn, const char *connectionString ) 
 
   if( credentialsScanned != 3 ) {
     /* not all of required credentials exists */
-    conn->err = MONGO_INVALID_CONNECTION_STRING;
+    conn->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
     return MONGO_ERROR;
   }
   return mongo_cmd_authenticate( conn->conn, db, user, pass );
@@ -30,7 +30,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
   int multipleHostsProvided, needToAuth, res;
   char *hosts, replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
 
-  if( conn->conn->connected ) return MONGO_OK;
+  if( conn->conn->connected == 1 ) return MONGO_OK;
   
   hosts = ( char* )bson_malloc( sizeof(char) * strlen( conn->pool->cs ) );
   sscanf( conn->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
@@ -46,7 +46,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
     if( hosts[0] == '\0' || /* required */
       ( multipleHostsProvided && replicaName[0] == '\0' )) /* replica set name required if multiple hosts specified */
     {
-      conn->err = MONGO_INVALID_CONNECTION_STRING;
+      conn->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
       res = MONGO_ERROR;
       break;
     }
@@ -64,7 +64,9 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *conn ) {
     {
       res = connectToReplicaSet( conn->conn, replicaName, hosts );
     }
-    if( needToAuth && res == MONGO_OK )
+    if( res == MONGO_ERROR )
+      conn->err = MONGO_CONNECTION_MONGO_ERROR;
+    else if( needToAuth )
       res = authenticate( conn, conn->pool->cs );
   } while( 0 );
 
@@ -101,8 +103,11 @@ static void mongo_connection_delete( mongo_connection* _this ) {
   bson_free( _this );
 }
 
-static mongo_connection_pool* mongo_connection_pool_new() {
-  return ( mongo_connection_pool* )bson_malloc( sizeof( mongo_connection_pool ) );
+static mongo_connection_pool* mongo_connection_pool_new( const char *cs ) {
+  mongo_connection_pool *pool = ( mongo_connection_pool* )bson_malloc( sizeof( mongo_connection_pool ) );
+  pool->cs = ( char* )bson_malloc( sizeof( char ) * strlen( cs ) + 1 );
+  strcpy( pool->cs, cs );
+  return pool;
 }
 
 static void mongo_connection_pool_delete( mongo_connection_pool *_this ) {
@@ -112,6 +117,7 @@ static void mongo_connection_pool_delete( mongo_connection_pool *_this ) {
     mongo_connection_delete( conn );
     conn = next;
   }
+  bson_free( _this->cs );
   bson_free( _this );
 }
 
@@ -120,8 +126,8 @@ MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_p
   if( pool->head == NULL ) {
     /* create new connection */
     res = mongo_connection_new();
+    res->pool = pool;
     res->err = MONGO_CONNECTION_SUCCESS;
-    res->pool = pool;    
     mongo_connection_connect( res );
   } else /* return first from pool */
     res = removeFirst( pool );
@@ -167,7 +173,7 @@ static void addToDictionary( mongo_connection_dictionary *dict, mongo_connection
   spinlock_unlock( &(dict->lock) );
 }
 
-MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *dict, char *cs ) {
+MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *dict, const char *cs ) {
   mongo_connection_pool *pool = dict->head, *lastPoolInDict = pool;
 
   /* find in dictionary by connection string */
@@ -179,9 +185,8 @@ MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_
 
   if( pool == NULL ) {
     /* create new pool object */
-    pool = mongo_connection_pool_new();
+    pool = mongo_connection_pool_new( cs );
     pool->head = NULL;
-    pool->cs = cs;
     pool->next = NULL;    
     spinLock_init( &pool->lock );
 
