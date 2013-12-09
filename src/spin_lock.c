@@ -5,19 +5,19 @@
 #define SPINS_BETWEEN_THREADSWITCH 1000
 
 static long crossSwap( spin_lock *_this, long originalValue, long exchgValue ) {
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   return InterlockedCompareExchange( _this, exchgValue, originalValue );
-  #else
+#else
   return __sync_val_compare_and_swap( _this, originalValue, exchgValue );
-  #endif
+#endif
 }
 
 static void crossYield( void ) {
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   SwitchToThread();
-  #else
+#else
   sched_yield();
-  #endif
+#endif
 }
 
 static void spin( int *spinCount ) {
