@@ -31,13 +31,13 @@ ENV?=posix
 
 # TODO: add replica set test, cpp test, platform tests, json_test
 TESTS=test_auth test_bcon test_bson test_bson_subobject test_connect test_count_delete \
-  test_cursors test_endian_swap test_errors test_examples \
-  test_functions test_gridfs test_helpers \
-  test_oid test_resize test_simple test_sizes test_update \
-  test_validate test_write_concern test_commands
+   test_cursors test_endian_swap test_errors test_examples \
+   test_functions test_gridfs test_helpers \
+   test_oid test_resize test_simple test_sizes test_update \
+   test_validate test_write_concern test_commands test_connectionpool
 EXAMPLES=example_example
 MONGO_OBJECTS=src/bcon.o src/bson.o src/encoding.o src/gridfs.o src/md5.o src/mongo.o \
- src/numbers.o
+ src/numbers.o src/spin_lock.o src/connection_pool.o
 BSON_OBJECTS=src/bcon.o src/bson.o src/numbers.o src/encoding.o
 
 #ifeq ($(ENV),posix)
@@ -148,8 +148,10 @@ encoding.o: src/encoding.c src/bson.h src/encoding.h
 env.o: src/env.c src/env.h src/mongo.h src/bson.h
 gridfs.o: src/gridfs.c src/gridfs.h src/mongo.h src/bson.h
 md5.o: src/md5.c src/md5.h
-mongo.o: src/mongo.c src/mongo.h src/bson.h src/md5.h src/env.h
+mongo.o: src/mongo.c src/mongo.h src/bson.h src/md5.h src/env.h src/connection_pool.h
 numbers.o: src/numbers.c
+spin_lock.o: src/spin_lock.c src/spin_lock.h
+connection_pool.o: src/connection_pool.c src/connection_pool.h src/spin_lock.h
 
 $(MONGO_DYLIBNAME): $(DYN_MONGO_OBJECTS)
 	$(MONGO_DYLIB_MAKE_CMD)

@@ -7,7 +7,7 @@
   #include <pthread.h>
 #endif 
 
-typedef LONG spin_lock;
+typedef long spin_lock;
 
 void spinLock_init( spin_lock *_this );
 void spinLock_destroy( spin_lock *_this );

@@ -34,6 +34,8 @@ int main() {
     }
 
     mongo_connection_pool_release( pool, conn );
+	
+	mongo_connection_dictionary_destroy( &dict );
     
     return 0;
 }
