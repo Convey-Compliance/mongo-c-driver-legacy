@@ -34,8 +34,8 @@ static int mongo_connection_authenticate( mongo_connection *_this, const char *c
     _this->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
     return MONGO_ERROR;
   }
-  if( mongo_cmd_authenticate( conn->conn, db, user, pass ) == MONGO_ERROR ) {
-    conn->err = MONGO_CONNECTION_AUTH_FAIL;
+  if( mongo_cmd_authenticate( _this->conn, db, user, pass ) == MONGO_ERROR ) {
+    _this->err = MONGO_CONNECTION_AUTH_FAIL;
     return MONGO_ERROR;
   }
   return MONGO_OK;
