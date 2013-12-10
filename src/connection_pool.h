@@ -12,6 +12,7 @@
 typedef enum mongo_connection_error_t {
     MONGO_CONNECTION_SUCCESS = 0,                   /**< Connection success! */
     MONGO_CONNECTION_INVALID_CONNECTION_STRING,     /**< Connection string is invalid */
+    MONGO_CONNECTION_AUTH_FAIL,                     /**< Invalid user or pass */
     MONGO_CONNECTION_MONGO_ERROR                    /**< Mongo driver error */
 } mongo_connection_error_t;
 
