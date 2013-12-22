@@ -41,6 +41,10 @@ static int mongo_connection_authenticate( mongo_connection *_this, const char *c
   return MONGO_OK;
 }
 
+static int isNeedToAuth( const char *connectionString ) {
+  return strchr( connectionString, '@' ) != NULL;
+}
+
 MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
   int multipleHostsProvided, needToAuth, res;
   char *hosts, replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
@@ -49,7 +53,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
   
   hosts = ( char* )bson_malloc( sizeof(char) * strlen( _this->pool->cs ) );
   sscanf( _this->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
-  needToAuth = (strchr( hosts, '@' ) != NULL); /* Moved out of conditional to avoid MSVC warnings... bummer */
+  needToAuth = isNeedToAuth( hosts ); /* Moved out of conditional to avoid MSVC warnings... bummer */
   if( needToAuth )
   {
     /* remove user and pass */
@@ -90,7 +94,13 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
 }
 
 MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *_this ) {
-  return mongo_reconnect( _this->conn ) == MONGO_OK && mongo_connection_authenticate( _this, _this->pool->cs ) == MONGO_OK ? MONGO_OK : MONGO_ERROR;
+  if( mongo_reconnect( _this->conn ) == MONGO_OK ) {
+    if( isNeedToAuth( _this->pool->cs ) && mongo_connection_authenticate( _this, _this->pool->cs ) != MONGO_OK )
+      return MONGO_ERROR;
+    return MONGO_OK;
+  }
+  
+  return MONGO_ERROR;
 }
 
 MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *_this ) {
