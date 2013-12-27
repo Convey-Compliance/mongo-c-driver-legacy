@@ -1,5 +1,11 @@
 #include "spin_lock.h"
 
+#ifdef _MSC_VER
+  #include <windows.h>
+#else
+  #include <pthread.h>
+#endif
+
 #define SPINLOCK_LOCKED 1
 #define SPINLOCK_UNLOCKED 0
 #define SPINS_BETWEEN_THREADSWITCH 1000
