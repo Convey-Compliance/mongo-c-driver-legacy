@@ -148,6 +148,7 @@ MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_p
     res = mongo_connection_new();
     res->pool = _this;
     res->err = MONGO_CONNECTION_SUCCESS;
+    res->conn->connected = 0; /* This flag will force following code to initialize connection object */
     mongo_connection_connect( res );
   } else /* return first from pool */
     res = mongo_connection_pool_removeFirst( _this );
