@@ -482,7 +482,7 @@ MONGO_EXPORT const char *bson_iterator_string( const bson_iterator *i );
  *
  * @return the length of the current BSON object.
  */
-int bson_iterator_string_len( const bson_iterator *i );
+MONGO_EXPORT int bson_iterator_string_len( const bson_iterator *i );
 
 /**
  * Get the code value of the BSON object currently pointed to by the
@@ -715,7 +715,7 @@ int bson_init_unfinished_data( bson *b, char *data, int dataSize, bson_bool_t ow
  * @return BSON_OK or BSON_ERROR with the bson error object set.
  *   Exits if allocation fails.
  */
-int bson_ensure_space( bson *b, const size_t bytesNeeded );
+MONGO_EXPORT int bson_ensure_space( bson *b, const size_t bytesNeeded );
 
 /**
  * Finalize a bson object.

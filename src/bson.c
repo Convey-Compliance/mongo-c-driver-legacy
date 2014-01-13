@@ -539,7 +539,7 @@ MONGO_EXPORT const char *bson_iterator_string( const bson_iterator *i ) {
     }
 }
 
-int bson_iterator_string_len( const bson_iterator *i ) {
+MONGO_EXPORT int bson_iterator_string_len( const bson_iterator *i ) {
     return bson_iterator_int_raw( i );
 }
 
@@ -706,7 +706,7 @@ static void bson_append64( bson *b, const void *data ) {
     b->cur += 8;
 }
 
-int bson_ensure_space( bson *b, const size_t bytesNeeded ) {
+MONGO_EXPORT int bson_ensure_space( bson *b, const size_t bytesNeeded ) {
     size_t pos = _bson_position(b);
     char *orig = b->data;
     int new_size;
