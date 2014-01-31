@@ -1745,6 +1745,41 @@ static int mongo_pass_digest( mongo *conn, const char *user, const char *pass, c
     return MONGO_OK;
 }
 
+MONGO_EXPORT int mongo_cmd_create_user( mongo *conn, const char *db,
+  const char *user, const char *pass, const char* roles[] )
+{
+  bson cmd;
+  const char** role;
+  char hex_digest[33];
+  int res;  
+
+  res = mongo_pass_digest( conn, user, pass, hex_digest );
+  if (res != MONGO_OK) {    
+    return res;
+  }
+
+  bson_init( &cmd );
+  bson_append_string( &cmd, "createUser", user );    
+  bson_append_string( &cmd, "pwd", hex_digest );
+  bson_append_bool( &cmd, "digestPassword", 0);
+
+  if( roles != NULL )
+  {  
+    bson_append_start_array( &cmd, "roles" );
+    for( role = &roles[0]; *role != NULL; role++ )
+    {    
+      bson_append_string( &cmd, "0", *role );       
+    }
+    bson_append_finish_array( &cmd );
+  }
+  bson_finish( &cmd );
+
+  res = mongo_run_command( conn, db, &cmd, NULL );
+
+  bson_destroy( &cmd );
+  return res;
+}
+
 MONGO_EXPORT int mongo_cmd_add_user( mongo *conn, const char *db, const char *user, const char *pass ) {
     bson user_obj;
     bson pass_obj;
