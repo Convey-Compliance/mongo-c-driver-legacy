@@ -67,6 +67,8 @@ MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn );
  *
  * @return connection already connected. Not need to call mongo_connection_connect()
  * note: connection could be not connected(check errors)
+ *
+ * Thread-Safe
  */
 MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *pool );
 
@@ -76,6 +78,8 @@ MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_p
  * @param pool connection pool to return connection
  *
  * @param conn unused connection
+ *
+ * Thread-Safe
  */
 MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *pool, mongo_connection *conn );
 
