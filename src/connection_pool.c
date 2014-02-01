@@ -130,11 +130,14 @@ static void mongo_connection_pool_delete( mongo_connection_pool *_this ) {
 }
 
 static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_pool *_this ) {
-  mongo_connection *res = _this->head;
+  mongo_connection *res;
 
   spinLock_lock( &_this->lock );
-
-  _this->head = _this->head->next;
+  
+  res = _this->head;
+  if( res != NULL ) {
+    _this->head = res->next;
+  }
 
   spinlock_unlock( &_this->lock );  
 
@@ -143,15 +146,20 @@ static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_poo
 
 MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *_this ) {
   mongo_connection *res;
-  if( _this->head == NULL ) {
-    /* create new connection */
-    res = mongo_connection_new();
-    res->pool = _this;
-    res->err = MONGO_CONNECTION_SUCCESS;
-    res->conn->connected = 0; /* This flag will force following code to initialize connection object */
-    mongo_connection_connect( res );
-  } else /* return first from pool */
-    res = mongo_connection_pool_removeFirst( _this );
+  /* We will implement a loop here to pull from pool. Accessing the head is outside of spin lock to avoid contention, but can happen that when the
+     if statement is hit, there's a head and by the time mongo_connection_pool_removeFirst() is called, there's no head anymore. 
+     Rather than surrounding all code with a lock, we will re-try to keep locking fine rather than adding a coarser lock */
+  do {
+    if( _this->head == NULL ) {
+      /* create new connection */
+      res = mongo_connection_new();
+      res->pool = _this;
+      res->err = MONGO_CONNECTION_SUCCESS;
+      res->conn->connected = 0; /* This flag will force following code to initialize connection object */
+      mongo_connection_connect( res );
+    } else /* return first from pool */
+      res = mongo_connection_pool_removeFirst( _this );
+  } while( res == NULL );
 
   res->next = NULL;
   return res;
