@@ -1600,7 +1600,7 @@ MONGO_EXPORT int mongo_run_command( mongo *conn, const char *db, const bson *com
     res = mongo_find_one( conn, ns, command, bson_shared_empty( ), response );
     bson_free( ns );
 
-    if (res == MONGO_OK && (!bson_find( it, response, "ok" ) || !bson_iterator_bool( it )) ) {
+    if (res == MONGO_OK && (( response->data == NULL ) || !bson_find( it, response, "ok" ) || !bson_iterator_bool( it )) ) {
         conn->err = MONGO_COMMAND_FAILED;
         bson_destroy( response );
         res = MONGO_ERROR;
