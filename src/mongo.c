@@ -1319,11 +1319,11 @@ MONGO_EXPORT int mongo_find_one( mongo *conn, const char *ns, const bson *query,
     mongo_cursor_set_query( cursor, query );
     mongo_cursor_set_fields( cursor, fields );
     mongo_cursor_set_limit( cursor, 1 );
-
+        
     ret = mongo_cursor_next(cursor);
     if (ret == MONGO_OK && out)
         ret = bson_copy(out, &cursor->current);
-    if (ret != MONGO_OK && out)
+    if (( ret != MONGO_OK || cursor->current.dataSize == 0 ) && out)
         bson_init_zero(out);
 
     mongo_cursor_destroy( cursor );
@@ -1336,6 +1336,7 @@ MONGO_EXPORT void mongo_cursor_init( mongo_cursor *cursor, mongo *conn, const ch
     cursor->ns = ( const char * )bson_malloc( strlen( ns ) + 1 );
     strncpy( ( char * )cursor->ns, ns, strlen( ns ) + 1 );
     cursor->current.data = NULL;
+    cursor->current.dataSize = 0;
 }
 
 MONGO_EXPORT void mongo_cursor_set_query( mongo_cursor *cursor, const bson *query ) {
