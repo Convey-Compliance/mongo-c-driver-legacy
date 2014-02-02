@@ -44,7 +44,7 @@ void spinLock_destroy( spin_lock *_this ){
 
 static void spinLock_exchg_locking( spin_lock *_this, long originalValue, long exchgValue ) {
   int spins = 0;
-  while( crossSwap( _this, exchgValue, originalValue ) != originalValue ) {
+  while( crossSwap( _this, originalValue, exchgValue ) != originalValue ) {
     spin( &spins );  
   };
 }
