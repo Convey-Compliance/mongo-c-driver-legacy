@@ -130,11 +130,14 @@ static void mongo_connection_pool_delete( mongo_connection_pool *_this ) {
 }
 
 static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_pool *_this ) {
-  mongo_connection *res = _this->head;
+  mongo_connection *res;
 
   spinLock_lock( &_this->lock );
-
-  _this->head = _this->head->next;
+  
+  res = _this->head;
+  if( res != NULL ) {
+    _this->head = res->next;
+  }
 
   spinlock_unlock( &_this->lock );  
 
@@ -142,18 +145,16 @@ static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_poo
 }
 
 MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_pool *_this ) {
-  mongo_connection *res;
-  if( _this->head == NULL ) {
-    /* create new connection */
-    res = mongo_connection_new();
-    res->pool = _this;
-    res->err = MONGO_CONNECTION_SUCCESS;
-    res->conn->connected = 0; /* This flag will force following code to initialize connection object */
-    mongo_connection_connect( res );
-  } else /* return first from pool */
-    res = mongo_connection_pool_removeFirst( _this );
-
+  mongo_connection *res = mongo_connection_pool_removeFirst( _this );
+  if( res != NULL ) return res;
+  /* create new connection */
+  res = mongo_connection_new();
+  res->pool = _this;
+  res->err = MONGO_CONNECTION_SUCCESS;
+  res->conn->connected = 0; /* This flag will force following code to initialize connection object */
+  mongo_connection_connect( res );
   res->next = NULL;
+
   return res;
 }
 

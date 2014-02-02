@@ -1319,11 +1319,11 @@ MONGO_EXPORT int mongo_find_one( mongo *conn, const char *ns, const bson *query,
     mongo_cursor_set_query( cursor, query );
     mongo_cursor_set_fields( cursor, fields );
     mongo_cursor_set_limit( cursor, 1 );
-
+        
     ret = mongo_cursor_next(cursor);
     if (ret == MONGO_OK && out)
         ret = bson_copy(out, &cursor->current);
-    if (ret != MONGO_OK && out)
+    if (( ret != MONGO_OK || cursor->current.dataSize == 0 ) && out)
         bson_init_zero(out);
 
     mongo_cursor_destroy( cursor );
@@ -1336,6 +1336,7 @@ MONGO_EXPORT void mongo_cursor_init( mongo_cursor *cursor, mongo *conn, const ch
     cursor->ns = ( const char * )bson_malloc( strlen( ns ) + 1 );
     strncpy( ( char * )cursor->ns, ns, strlen( ns ) + 1 );
     cursor->current.data = NULL;
+    cursor->current.dataSize = 0;
 }
 
 MONGO_EXPORT void mongo_cursor_set_query( mongo_cursor *cursor, const bson *query ) {
@@ -1600,7 +1601,7 @@ MONGO_EXPORT int mongo_run_command( mongo *conn, const char *db, const bson *com
     res = mongo_find_one( conn, ns, command, bson_shared_empty( ), response );
     bson_free( ns );
 
-    if (res == MONGO_OK && (!bson_find( it, response, "ok" ) || !bson_iterator_bool( it )) ) {
+    if (res == MONGO_OK && (( response->data == NULL ) || !bson_find( it, response, "ok" ) || !bson_iterator_bool( it )) ) {
         conn->err = MONGO_COMMAND_FAILED;
         bson_destroy( response );
         res = MONGO_ERROR;
@@ -1743,6 +1744,41 @@ static int mongo_pass_digest( mongo *conn, const char *user, const char *pass, c
     digest2hex( digest, hex_digest );
     
     return MONGO_OK;
+}
+
+MONGO_EXPORT int mongo_cmd_create_user( mongo *conn, const char *db,
+  const char *user, const char *pass, const char* roles[] )
+{
+  bson cmd;
+  const char** role;
+  char hex_digest[33];
+  int res;  
+
+  res = mongo_pass_digest( conn, user, pass, hex_digest );
+  if (res != MONGO_OK) {    
+    return res;
+  }
+
+  bson_init( &cmd );
+  bson_append_string( &cmd, "createUser", user );    
+  bson_append_string( &cmd, "pwd", hex_digest );
+  bson_append_bool( &cmd, "digestPassword", 0);
+
+  if( roles != NULL )
+  {  
+    bson_append_start_array( &cmd, "roles" );
+    for( role = &roles[0]; *role != NULL; role++ )
+    {    
+      bson_append_string( &cmd, "0", *role );       
+    }
+    bson_append_finish_array( &cmd );
+  }
+  bson_finish( &cmd );
+
+  res = mongo_run_command( conn, db, &cmd, NULL );
+
+  bson_destroy( &cmd );
+  return res;
 }
 
 MONGO_EXPORT int mongo_cmd_add_user( mongo *conn, const char *db, const char *user, const char *pass ) {
