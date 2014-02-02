@@ -36,17 +36,13 @@ void spinLock_destroy( spin_lock *_this ){
      that requires some kind of finalization */
 }
 
-static void spinLock_exchg_locking( spin_lock *_this, long originalValue, long exchgValue ) {
+void spinLock_lock( spin_lock *_this ) {
   int spins = 0;
-  while( crossSwap( _this, originalValue, exchgValue ) != originalValue ) {
+  while( crossSwap( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) != SPINLOCK_UNLOCKED ) {
     spin( &spins );  
   };
 }
 
-void spinLock_lock( spin_lock *_this ) {
-  spinLock_exchg_locking( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ); 
-}
-
 void spinlock_unlock( spin_lock *_this ) {
-  spinLock_exchg_locking( _this, SPINLOCK_LOCKED, SPINLOCK_UNLOCKED ); 
+  *_this = SPINLOCK_UNLOCKED;
 }
