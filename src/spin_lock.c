@@ -18,7 +18,7 @@ static long crossSwap( spin_lock *_this, long originalValue, long exchgValue ) {
 #endif
 }
 
-static void crossYield( void ) {
+void crossYield( void ) {
 #ifdef _MSC_VER
   SwitchToThread();
 #else
