@@ -1,4 +1,5 @@
 #include "connection_pool.h"
+#include "env.h"
 
 static int connectToReplicaSet( mongo *conn, const char *replicaName, char *hosts ) {
   char *hostPortPair = strtok( hosts, "," ), host[MAXHOSTNAMELEN];
@@ -15,6 +16,20 @@ static int connectToReplicaSet( mongo *conn, const char *replicaName, char *host
 }
 
 /* mongo_connection methods */
+
+void mongo_connection_set_socket_timeout( mongo_connection *conn, unsigned int timeout )
+{
+  conn->timeout = timeout;
+  if( conn->conn->connected )
+  {
+    mongo_env_set_socket_op_timeout( conn->conn, timeout );
+  }
+}
+
+unsigned int mongo_connection_get_socket_timeout( mongo_connection *conn )
+{
+  return conn->timeout;
+}
 
 static mongo_connection* mongo_connection_new() {
   return ( mongo_connection* )bson_malloc( sizeof( mongo_connection ) );
@@ -85,8 +100,12 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
     }
     if( res == MONGO_ERROR )
       _this->err = MONGO_CONNECTION_MONGO_ERROR;
-    else if( needToAuth )
-      res = mongo_connection_authenticate( _this, _this->pool->cs );
+    else 
+    {
+      mongo_env_set_socket_op_timeout( _this->conn, _this->timeout );
+      if( needToAuth )
+        res = mongo_connection_authenticate( _this, _this->pool->cs );
+    }
   } while( 0 );
 
   bson_free( hosts );
@@ -95,6 +114,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
 
 MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *_this ) {
   if( mongo_reconnect( _this->conn ) == MONGO_OK ) {
+    mongo_env_set_socket_op_timeout( _this->conn, _this->timeout );
     if( isNeedToAuth( _this->pool->cs ) && mongo_connection_authenticate( _this, _this->pool->cs ) != MONGO_OK )
       return MONGO_ERROR;
     return MONGO_OK;
@@ -152,6 +172,7 @@ MONGO_EXPORT mongo_connection* mongo_connection_pool_acquire( mongo_connection_p
   res->pool = _this;
   res->err = MONGO_CONNECTION_SUCCESS;
   res->conn->connected = 0; /* This flag will force following code to initialize connection object */
+  res->timeout = DEFAULT_SOCKET_TIMEOUT;
   mongo_connection_connect( res );
   res->next = NULL;
 
