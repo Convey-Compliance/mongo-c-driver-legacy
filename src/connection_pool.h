@@ -8,7 +8,7 @@
 #define MAX_PASS_LEN 256
 #define MAX_DB_LEN 256
 #define MAX_REPLICA_NAME_LEN 256
-#define DEFAULT_SOCKET_TIMEOUT 30000
+#define DEFAULT_SOCKET_TIMEOUT 15000
 
 typedef enum mongo_connection_error_t {
     MONGO_CONNECTION_SUCCESS = 0,                   /**< Connection success! */
