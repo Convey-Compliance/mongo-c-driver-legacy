@@ -8,6 +8,7 @@
 #define MAX_PASS_LEN 256
 #define MAX_DB_LEN 256
 #define MAX_REPLICA_NAME_LEN 256
+#define DEFAULT_SOCKET_TIMEOUT 15000
 
 typedef enum mongo_connection_error_t {
     MONGO_CONNECTION_SUCCESS = 0,                   /**< Connection success! */
@@ -19,6 +20,7 @@ typedef enum mongo_connection_error_t {
 typedef struct mongo_connection {
     mongo conn[1];                        /**< mongo object */
     mongo_connection_error_t err;         /**< error field */
+    unsigned int timeout;                 /**< timeout to use for all socket operations */
     struct mongo_connection *next;        /**< pointer to next connection in the pool */
     struct mongo_connection_pool *pool;   /**< pointer to connection pool(used to return connection in the pool after it is released and to get connection string) */
 } mongo_connection;
@@ -59,6 +61,23 @@ MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *conn );
  * @param conn connection object
  */
 MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn );
+
+/**
+ * sets socket timeout for connection
+ *
+ * @param conn connection object
+ * @param timeout to use for socket on read and write operations
+ */
+MONGO_EXPORT void mongo_connection_set_socket_timeout( mongo_connection *conn, unsigned int timeout );
+
+/**
+ * gets socket timeout for connection
+ *
+ * @param conn connection object 
+ *
+ * @return socket timeout of connection object
+ */
+MONGO_EXPORT unsigned int mongo_connection_get_socket_timeout( mongo_connection *conn );
 
 /**
  * get first connection from pool or open new one(if no connection in the pool)
