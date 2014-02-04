@@ -65,8 +65,9 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
   char *hosts, replicaName[MAX_REPLICA_NAME_LEN] = {'\0'};
 
   if( _this->conn->connected == 1 ) return MONGO_OK;
-  
+
   hosts = ( char* )bson_malloc( sizeof(char) * strlen( _this->pool->cs ) );
+  hosts[0] = '\0';
   sscanf( _this->pool->cs, "mongodb://%[^/]/%*[^?]?replicaSet=%s", hosts, replicaName );
   needToAuth = isNeedToAuth( hosts ); /* Moved out of conditional to avoid MSVC warnings... bummer */
   if( needToAuth )
@@ -80,6 +81,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
     if( hosts[0] == '\0' || /* required */
       ( multipleHostsProvided && replicaName[0] == '\0' )) /* replica set name required if multiple hosts specified */
     {
+      mongo_init( _this->conn ); /* reserve resources to allow free without errors while pool will be destroyed */
       _this->err = MONGO_CONNECTION_INVALID_CONNECTION_STRING;
       res = MONGO_ERROR;
       break;
