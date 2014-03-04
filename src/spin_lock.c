@@ -10,7 +10,7 @@
 #define SPINLOCK_UNLOCKED 0
 #define SPINS_BETWEEN_THREADSWITCH 1000
 
-static long crossSwap( spin_lock *_this, long originalValue, long exchgValue ) {
+long crossSwap( spin_lock *_this, long originalValue, long exchgValue ) {
 #ifdef _MSC_VER
   return InterlockedCompareExchange( _this, exchgValue, originalValue );
 #else
@@ -47,6 +47,11 @@ void spinLock_lock( spin_lock *_this ) {
   while( crossSwap( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) != SPINLOCK_UNLOCKED ) {
     spin( &spins );  
   };
+}
+
+int spinLock_tryLock( spin_lock *_this )
+{
+  return crossSwap( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) == SPINLOCK_UNLOCKED;
 }
 
 void spinlock_unlock( spin_lock *_this ) {
