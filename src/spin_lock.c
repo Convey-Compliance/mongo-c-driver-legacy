@@ -44,7 +44,7 @@ void spinLock_destroy( spin_lock *_this ){
 
 void spinLock_lock( spin_lock *_this ) {
   int spins = 0;
-  while( crossSwap( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) != SPINLOCK_UNLOCKED ) {
+  while( !spinLock_tryLock( _this ) ) {
     spin( &spins );  
   };
 }
