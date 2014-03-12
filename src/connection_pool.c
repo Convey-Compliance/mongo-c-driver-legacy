@@ -161,7 +161,7 @@ static mongo_connection* mongo_connection_pool_removeFirst( mongo_connection_poo
     _this->head = res->next;
   }
 
-  spinlock_unlock( &_this->lock );  
+  spinLock_unlock( &_this->lock );  
 
   return res;
 }
@@ -188,7 +188,7 @@ MONGO_EXPORT void mongo_connection_pool_release( mongo_connection_pool *_this, m
   conn->next = _this->head;
   _this->head = conn;
 
-  spinlock_unlock( &_this->lock );  
+  spinLock_unlock( &_this->lock );  
 }
 
 /* mongo_connection_dictionary methods */
@@ -241,7 +241,7 @@ MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_
     mongo_connection_dictionary_addToDictionary( _this, pool, lastPoolInDict );
   }
 
-  spinlock_unlock( &_this->lock );
+  spinLock_unlock( &_this->lock );
 
   return pool;
 }
