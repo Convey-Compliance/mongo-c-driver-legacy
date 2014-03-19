@@ -22,7 +22,7 @@ void mongo_connection_set_socket_timeout( mongo_connection *conn, unsigned int t
   conn->timeout = timeout;
   if( conn->conn->connected )
   {
-    mongo_env_set_socket_op_timeout( conn->conn, timeout );
+    mongo_set_op_timeout( conn->conn, timeout );
   }
 }
 
@@ -104,7 +104,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
       _this->err = MONGO_CONNECTION_MONGO_ERROR;
     else 
     {
-      mongo_env_set_socket_op_timeout( _this->conn, _this->timeout );
+      mongo_set_op_timeout( _this->conn, _this->timeout );
       if( needToAuth )
         res = mongo_connection_authenticate( _this, _this->pool->cs );
     }
@@ -116,7 +116,7 @@ MONGO_EXPORT int mongo_connection_connect( mongo_connection *_this ) {
 
 MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *_this ) {
   if( mongo_reconnect( _this->conn ) == MONGO_OK ) {
-    mongo_env_set_socket_op_timeout( _this->conn, _this->timeout );
+    mongo_set_op_timeout( _this->conn, _this->timeout );
     if( isNeedToAuth( _this->pool->cs ) && mongo_connection_authenticate( _this, _this->pool->cs ) != MONGO_OK )
       return MONGO_ERROR;
     return MONGO_OK;
