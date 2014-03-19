@@ -1,5 +1,4 @@
 #include "connection_pool.h"
-#include "env.h"
 
 static int connectToReplicaSet( mongo *conn, const char *replicaName, char *hosts ) {
   char *hostPortPair = strtok( hosts, "," ), host[MAXHOSTNAMELEN];
