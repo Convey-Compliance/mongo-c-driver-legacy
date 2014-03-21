@@ -54,6 +54,6 @@ int spinLock_tryLock( spin_lock *_this )
   return crossSwap( _this, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED ) == SPINLOCK_UNLOCKED;
 }
 
-void spinlock_unlock( spin_lock *_this ) {
+void spinLock_unlock( spin_lock *_this ) {
   *_this = SPINLOCK_UNLOCKED;
 }
