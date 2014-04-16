@@ -1,6 +1,10 @@
 #ifndef CONNECTION_POOL_H
 #define CONNECTION_POOL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mongo.h"
 #include "spin_lock.h"
 
@@ -8,7 +12,7 @@
 #define MAX_PASS_LEN 256
 #define MAX_DB_LEN 256
 #define MAX_REPLICA_NAME_LEN 256
-#define DEFAULT_SOCKET_TIMEOUT 15000
+#define DEFAULT_SOCKET_TIMEOUT 15000u
 
 typedef enum mongo_connection_error_t {
     MONGO_CONNECTION_SUCCESS = 0,                   /**< Connection success! */
@@ -62,7 +66,9 @@ MONGO_EXPORT int mongo_connection_reconnect( mongo_connection *conn );
  */
 MONGO_EXPORT void mongo_connection_disconnect( mongo_connection *conn );
 
-/**
+/**#ifdef __cplusplus
+} // extern "c"
+#endif
  * sets socket timeout for connection
  *
  * @param conn connection object
@@ -127,5 +133,9 @@ MONGO_EXPORT void mongo_connection_dictionary_destroy( mongo_connection_dictiona
  * @return connection pool object
  */
 MONGO_EXPORT mongo_connection_pool* mongo_connection_dictionary_get_pool( mongo_connection_dictionary *dict, const char *cs );
+
+#ifdef __cplusplus
+} // extern "c"
+#endif
 
 #endif
